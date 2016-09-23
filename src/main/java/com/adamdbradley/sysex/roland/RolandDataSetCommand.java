@@ -1,6 +1,10 @@
 package com.adamdbradley.sysex.roland;
 
-public abstract class RolandDataSetCommand implements Command {
+/**
+ * Immutable wrapper for the address and payload portions of a
+ * Roland Sysex message.
+ */
+public abstract class RolandDataSetCommand implements RolandSysexCommand {
 
     final byte[] payload;
 

@@ -1,6 +1,10 @@
 package com.adamdbradley.sysex;
 
-public class Volume extends SingleSevenBitData {
+/**
+ * Identifies a MIDI Continuous Control volume value (0-127).
+ * Nominal and wire values are identical.
+ */
+public class Volume extends ContinuousControlValue {
 
     private Volume(final int data) {
         super(data);

@@ -2,6 +2,11 @@ package com.adamdbradley.sysex.roland;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Identifies a particular Roland instrument model.
+ * This is used to populate the ModelID field and control the length of the
+ * address field in Roland's SysEx message format.
+ */
 @RequiredArgsConstructor
 public enum InstrumentModel {
 
@@ -15,13 +20,16 @@ public enum InstrumentModel {
      */
     A_90(4, new byte[] { (byte) 0x7D }),
 
-    /**
-     * Use {@link #Roland_JV_5080} messages;
-     * unsupported attributes are simply ignored.
-     */
-    JV_3080(4, new byte[] { (byte) 0x00, (byte) 0x10 }),
+    A_88(0, null),
+    A_49(0, null),
+    A_50(0, null),
+    A_33(0, null),
+    A_30(0, null),
+    A_300PRO(0, null),
+    A_500PRO(0, null),
+    A_800PRO(0, null),
 
-    JV_5080(4, new byte[] { (byte) 0x00, (byte) 0x10 });
+    ;
 
     private final int addressLength;
     private final byte[] modelId;

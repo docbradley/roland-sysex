@@ -1,9 +1,15 @@
-package com.adamdbradley.sysex;
+package com.adamdbradley.sysex.roland;
 
+import com.adamdbradley.sysex.SingleSevenBitData;
+
+/**
+ * Curve parameters used to tune velocity, aftertouch, etc.
+ * Nominal and wire values are identical.
+ */
 public class CurveParameterValue extends SingleSevenBitData {
 
     private CurveParameterValue(final int data) {
-        super(data);
+        super("CurveParam" + data, data);
     }
 
     private static final CurveParameterValue[] paramValues;

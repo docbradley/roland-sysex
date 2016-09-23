@@ -17,13 +17,14 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import com.adamdbradley.sysex.Message;
 import com.adamdbradley.sysex.roland.InstrumentModel;
 import com.adamdbradley.sysex.roland.RolandDataSetCommand;
-import com.adamdbradley.sysex.roland.RolandSysExMessage;
+import com.adamdbradley.sysex.roland.RolandSysexMessage;
 import com.google.common.collect.ImmutableList;
 
 /**
- * 142 bytes (7-bit 01 0E)
+ * Represents a single "patch" for the A-80 controller.
  */
 @Builder
 @EqualsAndHashCode
@@ -36,13 +37,13 @@ public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
     @NonNull @Nonnull private final String patchName; // Max Length: 16 ASCII
     @NonNull @Nonnull private final BitSet midiOutputUnmuted;
     @NonNull @Nonnull private final List<ZoneModel> zones; // 4 zones
-    @NonNull @Nonnull private final List<Optional<AdditionalProgramChangeModel>> effectors; // 4 adt'l PCs
+    @NonNull @Nonnull private final List<Optional<EffectorSetup>> effectors; // 4 adt'l PCs
 
     // Specifies default values for the Builder
     public static class PatchModelBuilder {
         private String patchName = "DEFAULT";
         private BitSet midiOutputUnmuted = BitSet.valueOf(new byte[] { 0x0F });
-        private List<Optional<AdditionalProgramChangeModel>> effectors = ImmutableList.of(
+        private List<Optional<EffectorSetup>> effectors = ImmutableList.of(
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -50,9 +51,9 @@ public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
     }
 
     @Override
-    public List<RolandSysExMessage> getDataSetMessages() {
+    public List<Message<?>> getDataSetMessages() {
         return Collections.singletonList(
-                new RolandSysExMessage((byte) 0x0, InstrumentModel.A_80,
+                new RolandSysexMessage((byte) 0x0, InstrumentModel.A_80,
                         new PatchDataSetCommand(patchNumber)));
     }
 
@@ -71,58 +72,35 @@ public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
     private byte[] build() {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(142)) {
             baos.write(titleBytes());
-            baos.write((byte) this.midiOutputUnmuted.toByteArray()[0]);
-            baos.write((byte) ((this.zones.get(0).isUnmuted() ? 1 : 0)
-                    | (this.zones.get(1).isUnmuted() ? 2 : 0)
-                    | (this.zones.get(2).isUnmuted() ? 4 : 0)
-                    | (this.zones.get(3).isUnmuted() ? 8 : 0)));
+            baos.write((byte) midiOutputUnmuted.toByteArray()[0]);
+            baos.write((byte) ((zones.get(0).isUnmuted() ? 1 : 0)
+                    | (zones.get(1).isUnmuted() ? 2 : 0)
+                    | (zones.get(2).isUnmuted() ? 4 : 0)
+                    | (zones.get(3).isUnmuted() ? 8 : 0)));
 
-            // TODO: loopify
-            baos.write(this.zones.get(0).build());
-            baos.write(this.zones.get(1).build());
-            baos.write(this.zones.get(2).build());
-            baos.write(this.zones.get(3).build());
+            if (zones.size() != 4) {
+                throw new IllegalStateException("Must have 4 zones: " + zones);
+            }
+            for (ZoneModel zone: zones) {
+                baos.write(zone.build());
+            }
 
-            // TODO: loopify
-            if (effectors.get(0).isPresent()) {
-                baos.write((byte) this.effectors.get(0).get().channel.getData());
-            } else {
-                baos.write((byte) 0x10);
+            if (effectors.size() != 4) {
+                throw new IllegalStateException("Must have 4 optional-effectors: " + effectors);
             }
-            if (effectors.get(1).isPresent()) {
-                baos.write((byte) this.effectors.get(1).get().channel.getData());
-            } else {
-                baos.write((byte) 0x10);
+            for (Optional<EffectorSetup> effector: effectors) {
+                if (effector.isPresent()) {
+                    baos.write((byte) effector.get().channel.getData());
+                } else {
+                    baos.write((byte) 0x10);
+                }
             }
-            if (effectors.get(2).isPresent()) {
-                baos.write((byte) this.effectors.get(2).get().channel.getData());
-            } else {
-                baos.write((byte) 0x10);
-            }
-            if (effectors.get(3).isPresent()) {
-                baos.write((byte) this.effectors.get(3).get().channel.getData());
-            } else {
-                baos.write((byte) 0x10);
-            }
-            if (effectors.get(0).isPresent()) {
-                baos.write((byte) this.effectors.get(0).get().programChange.getData());
-            } else {
-                baos.write((byte) 0x00);
-            }
-            if (effectors.get(1).isPresent()) {
-                baos.write((byte) this.effectors.get(1).get().programChange.getData());
-            } else {
-                baos.write((byte) 0x00);
-            }
-            if (effectors.get(2).isPresent()) {
-                baos.write((byte) this.effectors.get(2).get().programChange.getData());
-            } else {
-                baos.write((byte) 0x00);
-            }
-            if (effectors.get(3).isPresent()) {
-                baos.write((byte) this.effectors.get(3).get().programChange.getData());
-            } else {
-                baos.write((byte) 0x00);
+            for (Optional<EffectorSetup> effector: effectors) {
+                if (effector.isPresent()) {
+                    baos.write((byte) effector.get().programChange.getData());
+                } else {
+                    baos.write((byte) 0x00);
+                }
             }
 
             if (baos.size() != 142) {
@@ -139,7 +117,7 @@ public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
                 0x20, 0x20, 0x20, 0x20,
                 0x20, 0x20, 0x20, 0x20,
                 0x20, 0x20, 0x20, 0x20 };
-        final byte[] titleBytes = this.patchName.getBytes(Charset.forName("ASCII"));
+        final byte[] titleBytes = patchName.getBytes(Charset.forName("ASCII"));
         if (titleBytes.length > 16) {
             throw new IllegalStateException("Too long patch title: " + patchName);
         }

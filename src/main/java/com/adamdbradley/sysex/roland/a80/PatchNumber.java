@@ -3,12 +3,14 @@ package com.adamdbradley.sysex.roland.a80;
 import com.adamdbradley.sysex.SingleSevenBitData;
 
 /**
- * The A-80 itself's "Patches"
+ * Identifier for an A-80 "patch".
+ * Translates between nominal (1-64, aka 11-88 oct+1)
+ * and wire (0-63) representations.
  */
 public class PatchNumber extends SingleSevenBitData {
 
     private PatchNumber(final int data) {
-        super(data, 0x0000003F);
+        super("A80P" + (data + 1), data, 0x0000003F);
     }
 
     private static final PatchNumber[] patchValues;

@@ -5,17 +5,22 @@ import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.sysex.Message;
 
-public class RolandSysExMessage extends Message<SysexMessage> {
+/**
+ * Used to build a {@link SysexMessage} from a {@link RolandSysexCommand};
+ * wraps the latter with the Sysex start byte, Roland's Sysex prefix,
+ * the checksum byte, and the Sysex stop byte.
+ */
+public class RolandSysexMessage extends Message<SysexMessage> {
 
-    public RolandSysExMessage(final byte deviceId,
+    public RolandSysexMessage(final byte deviceId,
             final InstrumentModel model,
-            final Command command) {
+            final RolandSysexCommand command) {
         super(build(deviceId, model, command));
     }
 
     private static SysexMessage build(final byte deviceId,
             final InstrumentModel model,
-            final Command command) {
+            final RolandSysexCommand command) {
         final byte[] modelId = model.modelIdAsBytes();
         final byte[] body = command.bodyWithoutChecksum();
         final byte[] payload = new byte[5 + modelId.length + body.length + 2];
@@ -26,15 +31,13 @@ public class RolandSysExMessage extends Message<SysexMessage> {
         payload[3 + modelId.length] = command.id().asByte();
         System.arraycopy(body, 0, payload, 4 + modelId.length, body.length);
 
-        // Roland has two checksum standards:
-        // one that inspects the bytes of the body,
-        // and one that only inspects the length of the body.
         byte sum = 0b0;
         for (int i = 0; i < body.length; i++) {
             sum += body[i];
         }
 
-        payload[payload.length - 2] = (byte) (-sum & 0x7F);
+        payload[payload.length - 2] = (byte) (-sum & 0x7F); // checksum
+
         payload[payload.length - 1] = (byte) 0xF7; // end-of-sysex byte
 
         try {

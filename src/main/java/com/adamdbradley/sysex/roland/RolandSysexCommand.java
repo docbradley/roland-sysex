@@ -1,8 +1,16 @@
 package com.adamdbradley.sysex.roland;
 
+import javax.sound.midi.SysexMessage;
+
 import lombok.RequiredArgsConstructor;
 
-public interface Command {
+/**
+ * Immutable container for a Roland Sysex MIDI command
+ * (the command code and command-specific payload).
+ * Other classes handle adding Roland's checksum byte and wrapping the whole
+ * thing in a {@link SysexMessage}.
+ */
+public interface RolandSysexCommand {
 
     @RequiredArgsConstructor
     public enum CommandId {

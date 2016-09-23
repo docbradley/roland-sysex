@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 /**
- * 29 bytes (0x1D)
+ * Represents a single "zone" within a "patch" for the A-80 controller.
  */
 @Getter
 @RequiredArgsConstructor

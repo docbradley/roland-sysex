@@ -8,6 +8,10 @@ import com.adamdbradley.sysex.roland.PatchModel;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Wraps an {@link Update} with a strategy object that knows how to pace
+ * delivery of the constituent messages.
+ */
 @RequiredArgsConstructor
 public class ProgramSender implements Consumer<Receiver>{
 

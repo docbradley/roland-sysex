@@ -1,45 +1,32 @@
 package com.adamdbradley.sysex;
 
-import java.util.Arrays;
-
 import javax.sound.midi.MidiMessage;
 
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+
 /**
- * Immutable message wrapper object.
+ * Immutable wrapper object for {@link MidiMessage}.
+ * @param <T> subclass of MidiMessage to specialize for
  */
+@EqualsAndHashCode
+@RequiredArgsConstructor
 public abstract class Message<T extends MidiMessage> {
 
-	private final T message;
+    private final T message;
 
-    protected Message(final T message) {
-        this.message = message;
-    }
-
-    public final T getMessage() {
-        return message;
-    }
-
-    @Override
-    public int hashCode() {
-        return message.hashCode();
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-        if (other == null) {
-            return false;
-        }
-        if (!(other instanceof Message)) {
-            return false;
-        }
-        return Arrays.equals(message.getMessage(),
-                ((Message<?>) other).message.getMessage());
+    /**
+     * Since {@link MidiMessage} isn't immutable, always vend a copy so
+     * we can protect the one we own/wrap.
+     */
+    public final MidiMessage getMessage() {
+        return (MidiMessage) message.clone();
     }
 
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + ":"
-                + MidiUtils.toString(message);	
+                + MidiUtils.toString(message);
     }
 
 }

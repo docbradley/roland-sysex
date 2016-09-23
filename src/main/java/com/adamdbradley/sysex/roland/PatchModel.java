@@ -1,9 +1,11 @@
 package com.adamdbradley.sysex.roland;
 
-import java.util.List;
+import com.adamdbradley.sysex.Update;
 
-public interface PatchModel {
-
-    public List<RolandSysExMessage> getDataSetMessages();
+/**
+ * Encapsulates an object capable of specifying an update to a single
+ * controller patch, transmissible according to the {@link Update} contract.
+ */
+public interface PatchModel extends Update {
 
 }

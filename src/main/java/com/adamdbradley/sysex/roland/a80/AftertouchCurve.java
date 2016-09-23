@@ -2,7 +2,7 @@ package com.adamdbradley.sysex.roland.a80;
 
 import javax.annotation.Nonnull;
 
-import com.adamdbradley.sysex.CurveParameterValue;
+import com.adamdbradley.sysex.roland.CurveParameterValue;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -11,6 +11,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+/**
+ * Represents a particular configuration of an Aftertouch curve for a
+ * {@link ZoneModel}.
+ */
 @Builder
 @EqualsAndHashCode
 @Getter

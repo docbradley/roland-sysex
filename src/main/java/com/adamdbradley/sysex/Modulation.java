@@ -1,9 +1,13 @@
 package com.adamdbradley.sysex;
 
-public class Modulation extends SingleSevenBitData {
+/**
+ * Identifies a MIDI Continuous Control modulation value (0-127).
+ * Nominal and wire values are identical.
+ */
+public class Modulation extends ContinuousControlValue {
 
     private Modulation(final int data) {
-        super(data);
+        super("Mod" + data, data);
     }
 
     private static final Modulation[] modulationValues;

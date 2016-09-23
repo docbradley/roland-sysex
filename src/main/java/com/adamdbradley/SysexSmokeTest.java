@@ -1,6 +1,5 @@
-package com.adamdbradley.sysex;
+package com.adamdbradley;
 
-import java.util.BitSet;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
@@ -8,19 +7,24 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 
-import com.adamdbradley.sysex.roland.a80.AftertouchCurve;
+import com.adamdbradley.sysex.Channel;
+import com.adamdbradley.sysex.ContinuousControllerId;
+import com.adamdbradley.sysex.MidiUtils;
+import com.adamdbradley.sysex.ProgramChange;
+import com.adamdbradley.sysex.ProgramSender;
+import com.adamdbradley.sysex.Volume;
 import com.adamdbradley.sysex.roland.a80.PatchModel;
 import com.adamdbradley.sysex.roland.a80.PatchNumber;
-import com.adamdbradley.sysex.roland.a80.Transposition;
-import com.adamdbradley.sysex.roland.a80.VelocityCurve;
 import com.adamdbradley.sysex.roland.a80.ZoneModel;
-import com.adamdbradley.sysex.roland.a80.ZoneModel.ProgramChangePresentation;
 import com.google.common.collect.ImmutableList;
 
-public class TrialRun implements Callable<Void> {
+/**
+ * A smoke test.
+ */
+public class SysexSmokeTest implements Callable<Void> {
 
     public static void main(String[] args) throws Exception {
-        new TrialRun().call();
+        new SysexSmokeTest().call();
     }
 
     @Override

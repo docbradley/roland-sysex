@@ -1,9 +1,13 @@
 package com.adamdbradley.sysex;
 
+/**
+ * Identifies a program change value.
+ * Converts between nominal (1-128) and wire (0x00-0x7F).
+ */
 public class ProgramChange extends SingleSevenBitData {
 
     private ProgramChange(final int data) {
-        super(data);
+        super("PC" + (data + 1), data);
     }
 
     private static final ProgramChange[] pc;
@@ -16,11 +20,11 @@ public class ProgramChange extends SingleSevenBitData {
 
     /**
      * 
-     * @param value 0..127
+     * @param value 1..128
      * @return
      */
     public static ProgramChange of(final int value) {
-        return pc[value];
+        return pc[value - 1];
     }
 
 }

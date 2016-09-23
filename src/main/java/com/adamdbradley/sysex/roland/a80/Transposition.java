@@ -2,10 +2,14 @@ package com.adamdbradley.sysex.roland.a80;
 
 import com.adamdbradley.sysex.SingleSevenBitData;
 
+/**
+ * Identifies a transposition value.
+ * Translates between nominal (+/-36) and wire (0..72) values.
+ */
 public class Transposition extends SingleSevenBitData {
 
     private Transposition(final int data) {
-        super(data, 0x0000007F);
+        super("T" + (data - 36), data, 0x0000007F);
     }
 
     private static final Transposition transpositions[];

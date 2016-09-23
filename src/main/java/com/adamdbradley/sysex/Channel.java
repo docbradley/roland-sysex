@@ -1,15 +1,19 @@
 package com.adamdbradley.sysex;
 
+/**
+ * Identifier for a MIDI channel (1-16).
+ * Translates between the nominal value and the wire value (0x0 - 0xF).
+ */
 public class Channel extends SingleSevenBitData {
 
     private Channel(final int data) {
-        super(data, 0x0000001F); // 0x10 or higher = "disabled"
+        super("Ch" + (data+1), data, 0x0000000F);
     }
 
     private static final Channel[] channels;
     static {
-        channels = new Channel[17];
-        for (int i=0; i<17; i++) {
+        channels = new Channel[16];
+        for (int i=0; i<16; i++) {
             channels[i] = new Channel(i);
         }
     };
@@ -25,11 +29,4 @@ public class Channel extends SingleSevenBitData {
         return channels[channel - 1];
     }
 
-    /**
-     * Identifier for "use no channel" (i.e., disable feature)
-     * @return
-     */
-    public static Channel none() {
-        return channels[16];
-    }
 }

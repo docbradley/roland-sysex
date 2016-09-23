@@ -15,15 +15,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 /**
- * Generally wrapped in an {@link Optional};
- * only instantiate it if you mean it.
+ * Represents a {@link PatchModel} attribute allowing the controller to send
+ * additional Program Change messages whenever the patch is selected.
+ * Usually wrapped in an {@link Optional}; only instantiate it if you need it.
  */
 @Builder
 @EqualsAndHashCode
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class AdditionalProgramChangeModel {
+public class EffectorSetup {
 
     @NonNull @Nonnull final Channel channel;
     @NonNull @Nonnull final ProgramChange programChange;
