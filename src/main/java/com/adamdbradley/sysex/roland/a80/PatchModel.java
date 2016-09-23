@@ -6,16 +6,21 @@ import java.nio.charset.Charset;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nonnull;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import com.adamdbradley.sysex.roland.DeviceModel;
+import com.adamdbradley.sysex.roland.InstrumentModel;
 import com.adamdbradley.sysex.roland.RolandDataSetCommand;
 import com.adamdbradley.sysex.roland.RolandSysExMessage;
+import com.google.common.collect.ImmutableList;
 
 /**
  * 142 bytes (7-bit 01 0E)
@@ -27,54 +32,99 @@ import com.adamdbradley.sysex.roland.RolandSysExMessage;
 @ToString
 public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
 
-    final PatchNumber patchNumber;
+    @NonNull @Nonnull final PatchNumber patchNumber;
+    @NonNull @Nonnull private final String patchName; // Max Length: 16 ASCII
+    @NonNull @Nonnull private final BitSet midiOutputUnmuted;
+    @NonNull @Nonnull private final List<ZoneModel> zones; // 4 zones
+    @NonNull @Nonnull private final List<Optional<AdditionalProgramChangeModel>> effectors; // 4 adt'l PCs
 
-    // Length: 16 ASCII
-    private final String patchName;
-
-    private final BitSet midiOutputUnmuted;
-
-    // Four zones
-    private final List<ZoneModel> zones;
-
-    // Four additional program change commands
-    private final List<AdditionalProgramChangeModel> effectors;
+    // Specifies default values for the Builder
+    public static class PatchModelBuilder {
+        private String patchName = "DEFAULT";
+        private BitSet midiOutputUnmuted = BitSet.valueOf(new byte[] { 0x0F });
+        private List<Optional<AdditionalProgramChangeModel>> effectors = ImmutableList.of(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty());
+    }
 
     @Override
     public List<RolandSysExMessage> getDataSetMessages() {
         return Collections.singletonList(
-                new RolandSysExMessage((byte) 0x0, DeviceModel.A_80,
+                new RolandSysExMessage((byte) 0x0, InstrumentModel.A_80,
                         new PatchDataSetCommand(patchNumber)));
     }
 
     private class PatchDataSetCommand extends RolandDataSetCommand {
         private PatchDataSetCommand(PatchNumber patchNumber) {
-            super(DeviceModel.A_80,
+            super(InstrumentModel.A_80,
                     (patchNumber.getData() + 1) * 0x00010000,
                     build());
         }
     }
 
+    /**
+     * Excluding the checksum byte
+     * @return
+     */
     private byte[] build() {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(142)) {
             baos.write(titleBytes());
             baos.write((byte) this.midiOutputUnmuted.toByteArray()[0]);
-            baos.write((byte) ((this.zones.get(0).unmuted ? 1 : 0)
-                    | (this.zones.get(1).unmuted ? 2 : 0)
-                    | (this.zones.get(2).unmuted ? 4 : 0)
-                    | (this.zones.get(3).unmuted ? 8 : 0)));
+            baos.write((byte) ((this.zones.get(0).isUnmuted() ? 1 : 0)
+                    | (this.zones.get(1).isUnmuted() ? 2 : 0)
+                    | (this.zones.get(2).isUnmuted() ? 4 : 0)
+                    | (this.zones.get(3).isUnmuted() ? 8 : 0)));
+
+            // TODO: loopify
             baos.write(this.zones.get(0).build());
             baos.write(this.zones.get(1).build());
             baos.write(this.zones.get(2).build());
             baos.write(this.zones.get(3).build());
-            baos.write((byte) this.effectors.get(0).channel.getData());
-            baos.write((byte) this.effectors.get(1).channel.getData());
-            baos.write((byte) this.effectors.get(2).channel.getData());
-            baos.write((byte) this.effectors.get(3).channel.getData());
-            baos.write((byte) this.effectors.get(0).programChange.getData());
-            baos.write((byte) this.effectors.get(1).programChange.getData());
-            baos.write((byte) this.effectors.get(2).programChange.getData());
-            baos.write((byte) this.effectors.get(3).programChange.getData());
+
+            // TODO: loopify
+            if (effectors.get(0).isPresent()) {
+                baos.write((byte) this.effectors.get(0).get().channel.getData());
+            } else {
+                baos.write((byte) 0x10);
+            }
+            if (effectors.get(1).isPresent()) {
+                baos.write((byte) this.effectors.get(1).get().channel.getData());
+            } else {
+                baos.write((byte) 0x10);
+            }
+            if (effectors.get(2).isPresent()) {
+                baos.write((byte) this.effectors.get(2).get().channel.getData());
+            } else {
+                baos.write((byte) 0x10);
+            }
+            if (effectors.get(3).isPresent()) {
+                baos.write((byte) this.effectors.get(3).get().channel.getData());
+            } else {
+                baos.write((byte) 0x10);
+            }
+            if (effectors.get(0).isPresent()) {
+                baos.write((byte) this.effectors.get(0).get().programChange.getData());
+            } else {
+                baos.write((byte) 0x00);
+            }
+            if (effectors.get(1).isPresent()) {
+                baos.write((byte) this.effectors.get(1).get().programChange.getData());
+            } else {
+                baos.write((byte) 0x00);
+            }
+            if (effectors.get(2).isPresent()) {
+                baos.write((byte) this.effectors.get(2).get().programChange.getData());
+            } else {
+                baos.write((byte) 0x00);
+            }
+            if (effectors.get(3).isPresent()) {
+                baos.write((byte) this.effectors.get(3).get().programChange.getData());
+            } else {
+                baos.write((byte) 0x00);
+            }
+
             if (baos.size() != 142) {
                 throw new RuntimeException("Wrong size");
             }

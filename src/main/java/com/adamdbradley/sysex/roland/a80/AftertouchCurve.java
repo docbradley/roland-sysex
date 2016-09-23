@@ -1,10 +1,13 @@
 package com.adamdbradley.sysex.roland.a80;
 
+import javax.annotation.Nonnull;
+
 import com.adamdbradley.sysex.CurveParameterValue;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
@@ -31,15 +34,23 @@ public class AftertouchCurve {
     @RequiredArgsConstructor
     public enum AftertouchType {
         Poly((byte) 0),
-        Key((byte) 1),
-        Off((byte) 3);
+        Channel((byte) 1),
+        Off((byte) 2);
         private final byte value;
     }
 
-    private final CurveType curveType;
-    private final CurveParameterValue scaling;
-    private final CurveParameterValue holdoff;
-    private final AftertouchType type;
+    @NonNull @Nonnull private final CurveType curveType;
+    @NonNull @Nonnull private final CurveParameterValue scaling;
+    @NonNull @Nonnull private final CurveParameterValue holdoff;
+    @NonNull @Nonnull private final AftertouchType type;
+
+    // Provides defaults for Builder
+    public static class AftertouchCurveBuilder {
+        private CurveType curveType = CurveType.Flat;
+        private CurveParameterValue scaling = CurveParameterValue.of(64);
+        private CurveParameterValue holdoff = CurveParameterValue.of(0);
+        private AftertouchType type = AftertouchType.Poly;
+    }
 
     byte[] build() {
         return new byte[] {

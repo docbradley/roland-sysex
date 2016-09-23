@@ -2,6 +2,8 @@ package com.adamdbradley.sysex;
 
 public class ContinuousControllerId extends SingleSevenBitData {
 
+    // TODO: enum or other symbol mechanism for standard values
+
     private ContinuousControllerId(final int data) {
         super(data);
     }
@@ -15,11 +17,15 @@ public class ContinuousControllerId extends SingleSevenBitData {
     }
 
     /**
-     * @param ccid 0 for "none" or 1..127
+     * @param ccid 0..127
      * @return
      */
     public static ContinuousControllerId of(final int ccid) {
         return controllerIds[ccid];
+    }
+
+    public static ContinuousControllerId none() {
+        return null;
     }
 
 }

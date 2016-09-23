@@ -4,13 +4,26 @@ public abstract class RolandDataSetCommand implements Command {
 
     final byte[] payload;
 
-    public RolandDataSetCommand(final DeviceModel model,
+    /**
+     * 
+     * @param model
+     * @param address
+     * @param data Starting with the first byte after address, ending before the end-of-sysex byte
+     */
+    protected RolandDataSetCommand(final InstrumentModel model,
             final int address,
             final byte[] data) {
         payload = build(model, address, data);
     }
 
-    private static byte[] build(final DeviceModel model, final int address,
+    /**
+     * 
+     * @param model
+     * @param address
+     * @param data Excluding the checksum
+     * @return Still excluding the checksum
+     */
+    private static byte[] build(final InstrumentModel model, final int address,
             final byte[] data) {
         if (data.length > 256) {
             throw new IllegalArgumentException("Can't build message over 256 bytes long");
@@ -22,7 +35,7 @@ public abstract class RolandDataSetCommand implements Command {
         return payload;
     }
 
-    private static byte[] buildAddressBytes(DeviceModel model, int address) {
+    private static byte[] buildAddressBytes(InstrumentModel model, int address) {
         switch(model.addressLength()) {
         case 3:
             if ((address & 0xFF808080) != 0) {

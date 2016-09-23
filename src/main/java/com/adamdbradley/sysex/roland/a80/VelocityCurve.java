@@ -1,10 +1,13 @@
 package com.adamdbradley.sysex.roland.a80;
 
+import javax.annotation.Nonnull;
+
 import com.adamdbradley.sysex.CurveParameterValue;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
@@ -28,10 +31,18 @@ public class VelocityCurve {
         private final byte value;
     }
 
-    private final CurveType curve;
-    private final CurveParameterValue scaling;
-    private final CurveParameterValue offset;
-    private final CurveParameterValue holdoff;
+    @NonNull @Nonnull private final CurveType curve;
+    @NonNull @Nonnull private final CurveParameterValue scaling;
+    @NonNull @Nonnull private final CurveParameterValue offset;
+    @NonNull @Nonnull private final CurveParameterValue holdoff;
+
+    // Provides defaults for Builder
+    public static class VelocityCurveBuilder {
+        private CurveType curve = CurveType.Flat;
+        private CurveParameterValue scaling = CurveParameterValue.of(64);
+        private CurveParameterValue offset = CurveParameterValue.of(0);
+        private CurveParameterValue holdoff = CurveParameterValue.of(0);
+    }
 
     byte[] build() {
         return new byte[] {

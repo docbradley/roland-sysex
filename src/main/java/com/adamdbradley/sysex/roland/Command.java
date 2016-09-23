@@ -1,7 +1,10 @@
 package com.adamdbradley.sysex.roland;
 
+import lombok.RequiredArgsConstructor;
+
 public interface Command {
 
+    @RequiredArgsConstructor
     public enum CommandId {
         /**
          * RQ1
@@ -18,9 +21,6 @@ public interface Command {
             return id;
         }
 
-        private CommandId(final byte id) {
-            this.id = id;
-        }
     }
 
     /**

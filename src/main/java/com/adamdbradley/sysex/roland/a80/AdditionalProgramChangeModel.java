@@ -1,14 +1,23 @@
 package com.adamdbradley.sysex.roland.a80;
 
+import java.util.Optional;
+
+import javax.annotation.Nonnull;
+
 import com.adamdbradley.sysex.Channel;
 import com.adamdbradley.sysex.ProgramChange;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+/**
+ * Generally wrapped in an {@link Optional};
+ * only instantiate it if you mean it.
+ */
 @Builder
 @EqualsAndHashCode
 @Getter
@@ -16,7 +25,7 @@ import lombok.ToString;
 @ToString
 public class AdditionalProgramChangeModel {
 
-    final Channel channel;
-    final ProgramChange programChange;
+    @NonNull @Nonnull final Channel channel;
+    @NonNull @Nonnull final ProgramChange programChange;
 
 }
