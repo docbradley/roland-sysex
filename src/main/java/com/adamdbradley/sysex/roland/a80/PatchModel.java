@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableList;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class PatchModel implements com.adamdbradley.sysex.roland.PatchModel {
+public class PatchModel implements com.adamdbradley.sysex.roland.UpdatingModel {
 
     @NonNull @Nonnull final PatchNumber patchNumber;
     @NonNull @Nonnull private final String patchName; // Max Length: 16 ASCII

@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 import javax.sound.midi.Receiver;
 
-import com.adamdbradley.sysex.roland.PatchModel;
+import com.adamdbradley.sysex.roland.UpdatingModel;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProgramSender implements Consumer<Receiver>{
 
-    private final PatchModel patchModel;
+    private final UpdatingModel patchModel;
 
     @Override
     public void accept(final Receiver receiver) {
