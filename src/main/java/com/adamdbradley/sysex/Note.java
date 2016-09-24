@@ -1,5 +1,10 @@
 package com.adamdbradley.sysex;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.google.common.collect.ImmutableMap;
+
 /**
  * Identifies a MIDI note number (0..127).
  * Nominals conform to the "C3 standard" where middle C is named "C3".
@@ -8,6 +13,23 @@ package com.adamdbradley.sysex;
  * On the wire, middle C is 60 (0x3C).
  */
 public class Note extends SingleSevenBitData {
+
+    private static final Pattern C3_PARSER = Pattern.compile("([A-G][#b]?)(-?\\d+)");
+    private static final ImmutableMap<String, Integer> NOTE_NAME_VALUES = ImmutableMap
+            .<String, Integer>builder()
+            .put("C", 0)
+            .put("C#", 1).put("Db", 1)
+            .put("D", 2)
+            .put("D#", 3).put("Eb", 3)
+            .put("E", 4)
+            .put("F", 5)
+            .put("F#", 6).put("Gb", 6)
+            .put("G", 7)
+            .put("G#", 8).put("Ab", 8)
+            .put("A", 9)
+            .put("A#", 10).put("Bb", 10)
+            .put("B", 11)
+            .build();
 
     private static String noteName[] = {
             "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -39,7 +61,7 @@ public class Note extends SingleSevenBitData {
      * @return
      */
     public static Note of(final String midiConventional) {
-        throw new RuntimeException("not implemented yet"); // TODO
+        return parse(midiConventional, -2);
     }
 
     /**
@@ -49,7 +71,19 @@ public class Note extends SingleSevenBitData {
      * @return
      */
     public static Note ofASA(final String asaConvention) {
-        throw new RuntimeException("not implemented yet"); // TODO
+        return parse(asaConvention, -1);
     }
 
+    private static Note parse(final String name, final int noteZeroOctave) {
+        final Matcher matcher = C3_PARSER.matcher(name);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Unknown note name " + name);
+        }
+        final String noteName = matcher.group(1);
+        final String octaveName = matcher.group(2);
+        final int noteValue = NOTE_NAME_VALUES.get(noteName);
+        final int octave = Integer.parseInt(octaveName);
+        final int midiNoteNumber = ((octave - noteZeroOctave) * 12) + noteValue;
+        return of(midiNoteNumber);
+    }
 }
