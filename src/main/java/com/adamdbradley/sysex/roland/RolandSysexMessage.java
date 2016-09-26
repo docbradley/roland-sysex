@@ -47,4 +47,52 @@ public class RolandSysexMessage extends Message<SysexMessage> {
         }
     }
 
+    public static RolandSysexCommand parseMessageToCommand(final SysexMessage sysexMessage) {
+        final byte[] totalMessage = sysexMessage.getMessage();
+        if (totalMessage[0] != 0xF0) { // "Sysex"
+            throw new IllegalArgumentException("Unrecognized initial byte");
+        }
+        if (totalMessage[1] != 0x41) { // "Roland"
+            throw new IllegalArgumentException("Unrecognized vendor byte");
+        }
+
+        final byte deviceId = totalMessage[2];
+
+        final InstrumentModel instrument = identifyInstrument(totalMessage[3]);
+
+        // Strip off SOX, Mfgr, ModelId, DevId, Command, //, Checksum, EOX
+        final byte[] payload = new byte[totalMessage.length - 7];
+        System.arraycopy(sysexMessage.getData(), 5, payload, 0, payload.length);
+
+        byte sum = 0x0;
+        for (int i=0; i<payload.length; i++) {
+            sum += payload[i];
+        }
+        final byte checksum = (byte) (-sum & 0x7F);
+        if (checksum != sysexMessage.getData()[sysexMessage.getData().length - 2]) {
+            throw new IllegalArgumentException("Checksum didn't agree");
+        }
+
+        final byte commandId = totalMessage[4];
+        switch (commandId) {
+        case 0x11: // RQ1
+            return RolandDataRequestCommand.parse(instrument, deviceId, payload);
+        case 0x12: // DT1
+            return RolandDataSetCommand.parse(instrument, deviceId, payload);
+        default:
+            throw new IllegalArgumentException("???");
+        }
+    }
+
+    private static InstrumentModel identifyInstrument(final byte b) {
+        switch (b) {
+        case 0x27:
+            return InstrumentModel.A_80;
+        case 0x7D:
+            return InstrumentModel.A_90;
+        default:
+            throw new IllegalArgumentException("Unrecognized model byte");
+        }
+    }
+
 }
