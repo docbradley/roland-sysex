@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex.roland.a80;
+package com.adamdbradley.midi.sysex.roland.a80;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,10 +17,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import com.adamdbradley.sysex.Message;
-import com.adamdbradley.sysex.roland.InstrumentModel;
-import com.adamdbradley.sysex.roland.RolandDataSetCommand;
-import com.adamdbradley.sysex.roland.RolandSysexMessage;
+import com.adamdbradley.midi.Message;
+import com.adamdbradley.midi.sysex.roland.InstrumentModel;
+import com.adamdbradley.midi.sysex.roland.RolandDataSetCommand;
+import com.adamdbradley.midi.sysex.roland.RolandSysexMessage;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableList;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class PatchModel implements com.adamdbradley.sysex.roland.UpdatingModel {
+public class PatchModel implements com.adamdbradley.midi.sysex.roland.UpdatingModel {
 
     @NonNull @Nonnull final PatchNumber patchNumber;
     @NonNull @Nonnull private final String patchName; // Max Length: 16 ASCII
@@ -51,7 +51,7 @@ public class PatchModel implements com.adamdbradley.sysex.roland.UpdatingModel {
     }
 
     @Override
-    public List<Message<?>> getDataSetMessages() {
+    public List<Message<?>> getMessages() {
         return Collections.singletonList(
                 new RolandSysexMessage((byte) 0x0, InstrumentModel.A_80,
                         new PatchDataSetCommand(patchNumber)));

@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex;
+package com.adamdbradley.midi.domain;
 
 /**
  * Identifies a MIDI Continuous Control volume value (0-127).

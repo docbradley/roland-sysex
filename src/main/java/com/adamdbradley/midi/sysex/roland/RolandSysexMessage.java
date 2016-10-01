@@ -1,9 +1,9 @@
-package com.adamdbradley.sysex.roland;
+package com.adamdbradley.midi.sysex.roland;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.SysexMessage;
 
-import com.adamdbradley.sysex.Message;
+import com.adamdbradley.midi.Message;
 
 /**
  * Used to build a {@link SysexMessage} from a {@link RolandSysexCommand};

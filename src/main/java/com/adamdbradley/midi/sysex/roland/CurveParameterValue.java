@@ -1,6 +1,6 @@
-package com.adamdbradley.sysex.roland;
+package com.adamdbradley.midi.sysex.roland;
 
-import com.adamdbradley.sysex.SingleSevenBitData;
+import com.adamdbradley.midi.domain.SingleSevenBitData;
 
 /**
  * Curve parameters used to tune velocity, aftertouch, etc.

@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex;
+package com.adamdbradley.midi;
 
 import java.util.List;
 
@@ -8,6 +8,6 @@ import java.util.List;
  */
 public interface Update {
 
-    public List<Message<?>> getDataSetMessages();
+    public List<Message<?>> getMessages();
 
 }

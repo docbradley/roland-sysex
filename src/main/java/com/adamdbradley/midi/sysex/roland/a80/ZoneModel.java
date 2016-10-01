@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex.roland.a80;
+package com.adamdbradley.midi.sysex.roland.a80;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -7,12 +7,12 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import com.adamdbradley.sysex.Channel;
-import com.adamdbradley.sysex.ContinuousControllerId;
-import com.adamdbradley.sysex.Modulation;
-import com.adamdbradley.sysex.Note;
-import com.adamdbradley.sysex.ProgramChange;
-import com.adamdbradley.sysex.Volume;
+import com.adamdbradley.midi.domain.Channel;
+import com.adamdbradley.midi.domain.ContinuousControllerId;
+import com.adamdbradley.midi.domain.Modulation;
+import com.adamdbradley.midi.domain.Note;
+import com.adamdbradley.midi.domain.ProgramChange;
+import com.adamdbradley.midi.domain.Volume;
 import com.google.common.collect.ImmutableList;
 
 import lombok.Builder;
@@ -63,11 +63,14 @@ public class ZoneModel {
     @NonNull @Nonnull private final List<Optional<ContinuousControllerId>> switchControls;
     @NonNull @Nonnull private final List<Optional<ContinuousControllerId>> pedalControls;
 
-    // Provides defaults for Builder
+    /**
+     * Default {@link ZoneModel} is based on mostly sensible values, but
+     * key range is 0-0 and all controllers are disabled.
+     */
     public static class ZoneModelBuilder {
         private boolean unmuted = true;
         private Note startKey = Note.of(0);
-        private Note endKey = Note.of(127);
+        private Note endKey = Note.of(0);
         private Transposition transpose = Transposition.of(0);
         private VelocityCurve velocityCurve = VelocityCurve.builder().build();
         private AftertouchCurve aftertouchCurve = AftertouchCurve.builder().build();

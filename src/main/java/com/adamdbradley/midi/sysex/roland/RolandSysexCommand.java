@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex.roland;
+package com.adamdbradley.midi.sysex.roland;
 
 import javax.sound.midi.SysexMessage;
 

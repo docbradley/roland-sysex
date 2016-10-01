@@ -1,41 +1,41 @@
-package com.adamdbradley.sysex.roland;
+package com.adamdbradley.midi.sysex.roland;
 
 /**
- * Immutable wrapper for a Roland Sysex request for a data dump.
+ * Immutable wrapper for the address and payload portions of a
+ * Roland Sysex message.
  */
-public class RolandDataRequestCommand implements RolandSysexCommand {
+public abstract class RolandDataSetCommand implements RolandSysexCommand {
 
     final byte[] payload;
 
     /**
+     * 
      * @param model
      * @param address
-     * @param length
+     * @param data Starting with the first byte after address, ending before the end-of-sysex byte
      */
-    protected RolandDataRequestCommand(final InstrumentModel model,
+    protected RolandDataSetCommand(final InstrumentModel model,
             final int address,
-            final int length) {
-        payload = build(model, address, length);
+            final byte[] data) {
+        payload = build(model, address, data);
     }
 
     /**
      * 
      * @param model
      * @param address
-     * @param length
+     * @param data Excluding the checksum
      * @return Still excluding the checksum
      */
     private static byte[] build(final InstrumentModel model, final int address,
-            final int length) {
-        if (length > 0x0FFFFFFF || length < 0) {
-            throw new IllegalArgumentException("Too long");
+            final byte[] data) {
+        if (data.length > 256) {
+            throw new IllegalArgumentException("Can't build message over 256 bytes long");
         }
+        final byte[] payload = new byte[model.addressLength() + data.length];
         final byte[] addressBytes = buildAddressBytes(model, address);
-        final byte[] lengthBytes = buildAddressBytes(model, length);
-
-        final byte[] payload = new byte[model.addressLength() * 2];
         System.arraycopy(addressBytes, 0, payload, 0, model.addressLength());
-        System.arraycopy(lengthBytes, 0, payload, model.addressLength(), lengthBytes.length);
+        System.arraycopy(data, 0, payload, model.addressLength(), data.length);
         return payload;
     }
 
@@ -77,20 +77,25 @@ public class RolandDataRequestCommand implements RolandSysexCommand {
         return payload;
     }
 
-    public static RolandDataRequestCommand parse(final InstrumentModel model,
+    /**
+     * @param model
+     * @param deviceId
+     * @param payload From start of address through checksum
+     * @return
+     */
+    public static RolandSysexCommand parse(final InstrumentModel model,
             final byte deviceId,
             final byte[] payload) {
         final byte[] addressBytes = new byte[4];
-        final byte[] lengthBytes = new byte[4];
+        final byte[] dataPayload;
         switch (model.addressLength()) {
         case 3:
+            dataPayload = new byte[payload.length - 3];
             System.arraycopy(payload, 1, addressBytes, 1, 3);
-            System.arraycopy(payload, 5, lengthBytes, 1, 3);
             break;
         case 4:
+            dataPayload = new byte[payload.length - 4];
             System.arraycopy(payload, 0, addressBytes, 0, 4);
-            System.arraycopy(payload, 4, lengthBytes, 0, 4);
-            break;
         default:
             throw new IllegalArgumentException("Length not understood");
         }
@@ -98,12 +103,10 @@ public class RolandDataRequestCommand implements RolandSysexCommand {
                 + (addressBytes[1] * 0x00010000)
                 + (addressBytes[2] * 0x00000100)
                 + (addressBytes[3]);
-        final int length = (lengthBytes[0] * 0x010000)
-                + (lengthBytes[1] * 0x00010000)
-                + (lengthBytes[2] * 0x00000100)
-                + (lengthBytes[3]);
 
-        return new RolandDataRequestCommand(model, address, length);
+        // TODO: break out A-80/A-90 part messages to subtypes
+
+        return new RolandDataSetCommand(model, address, dataPayload) {};
     }
 
 }

@@ -1,11 +1,11 @@
-package com.adamdbradley.sysex.roland.a80;
+package com.adamdbradley.midi.sysex.roland.a80;
 
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import com.adamdbradley.sysex.Channel;
-import com.adamdbradley.sysex.ProgramChange;
+import com.adamdbradley.midi.domain.Channel;
+import com.adamdbradley.midi.domain.ProgramChange;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

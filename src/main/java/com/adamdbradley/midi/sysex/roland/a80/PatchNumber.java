@@ -1,6 +1,6 @@
-package com.adamdbradley.sysex.roland.a80;
+package com.adamdbradley.midi.sysex.roland.a80;
 
-import com.adamdbradley.sysex.SingleSevenBitData;
+import com.adamdbradley.midi.domain.SingleSevenBitData;
 
 /**
  * Identifier for an A-80 "patch".

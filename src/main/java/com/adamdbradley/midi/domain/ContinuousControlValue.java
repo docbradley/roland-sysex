@@ -1,4 +1,4 @@
-package com.adamdbradley.sysex;
+package com.adamdbradley.midi.domain;
 
 /**
  * Identifies a MIDI Continuous Control value (0-127).

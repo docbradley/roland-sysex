@@ -1,6 +1,6 @@
-package com.adamdbradley.sysex.roland;
+package com.adamdbradley.midi.sysex.roland;
 
-import com.adamdbradley.sysex.Update;
+import com.adamdbradley.midi.Update;
 
 /**
  * Encapsulates an object capable of specifying an update to a single
