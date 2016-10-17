@@ -33,7 +33,7 @@ public class ProgramSender implements Consumer<Receiver>{
                         .forEachOrdered(msg -> {
                             receiver.send(msg.getMessage(), 0L);
                             try {
-                                Thread.sleep(20);
+                                Thread.sleep(40);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
