@@ -7,15 +7,15 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 
-import com.adamdbradley.sysex.Channel;
-import com.adamdbradley.sysex.ContinuousControllerId;
-import com.adamdbradley.sysex.MidiUtils;
-import com.adamdbradley.sysex.ProgramChange;
-import com.adamdbradley.sysex.ProgramSender;
-import com.adamdbradley.sysex.Volume;
-import com.adamdbradley.sysex.roland.a80.PatchModel;
-import com.adamdbradley.sysex.roland.a80.PatchNumber;
-import com.adamdbradley.sysex.roland.a80.ZoneModel;
+import com.adamdbradley.midi.MidiUtils;
+import com.adamdbradley.midi.domain.Channel;
+import com.adamdbradley.midi.domain.ContinuousControllerId;
+import com.adamdbradley.midi.domain.ProgramChange;
+import com.adamdbradley.midi.domain.ProgramSender;
+import com.adamdbradley.midi.domain.Volume;
+import com.adamdbradley.midi.sysex.roland.a80.PatchModel;
+import com.adamdbradley.midi.sysex.roland.a80.PatchNumber;
+import com.adamdbradley.midi.sysex.roland.a80.ZoneModel;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -71,7 +71,7 @@ public class SysexSmokeTest implements Callable<Void> {
                                         ))
                         .build();
 
-        patchModel.getDataSetMessages().stream()
+        patchModel.getMessages().stream()
                 .forEach(msg -> {
                     System.err.println(MidiUtils.toString(msg.getMessage()));
                 });
