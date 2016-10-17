@@ -71,6 +71,7 @@ public class ZoneModel {
         private boolean unmuted = true;
         private Note startKey = Note.of(0);
         private Note endKey = Note.of(0);
+        private Channel channel = Channel.of(1);
         private Transposition transpose = Transposition.of(0);
         private VelocityCurve velocityCurve = VelocityCurve.builder().build();
         private AftertouchCurve aftertouchCurve = AftertouchCurve.builder().build();
@@ -78,7 +79,7 @@ public class ZoneModel {
         private Volume volume = Volume.of(100);
         private Modulation modulation = Modulation.of(0);
         private boolean enablePitchBend = true;
-        private ProgramChange programChange = ProgramChange.of(0);
+        private ProgramChange programChange = ProgramChange.of(1); // TODO: optional?
         private List<Optional<ContinuousControllerId>> sliderControls = ImmutableList.of(
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
         private List<Optional<ContinuousControllerId>> switchControls = ImmutableList.of(
