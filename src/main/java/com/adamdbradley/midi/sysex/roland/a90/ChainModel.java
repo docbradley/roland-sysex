@@ -14,8 +14,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import com.adamdbradley.midi.Message;
 import com.adamdbradley.midi.domain.ProgramChange;
+import com.adamdbradley.midi.message.Message;
 import com.adamdbradley.midi.sysex.roland.InstrumentModel;
 import com.adamdbradley.midi.sysex.roland.RolandDataSetCommand;
 import com.adamdbradley.midi.sysex.roland.RolandSysexCommand;

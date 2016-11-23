@@ -2,6 +2,8 @@ package com.adamdbradley.midi;
 
 import java.util.List;
 
+import com.adamdbradley.midi.message.Message;
+
 /**
  * Encapsulates any object capable of specifying a transmittable update as
  * a series of one or more {@link Message}s.
