@@ -79,7 +79,7 @@ public class ZoneModel {
         private Volume volume = Volume.of(100);
         private Modulation modulation = Modulation.of(0);
         private boolean enablePitchBend = true;
-        private ProgramChange programChange = ProgramChange.of(1); // TODO: optional?
+        private ProgramChange programChange = ProgramChange.of(1);
         private List<Optional<ContinuousControllerId>> sliderControls = ImmutableList.of(
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
         private List<Optional<ContinuousControllerId>> switchControls = ImmutableList.of(
