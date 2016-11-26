@@ -1,6 +1,13 @@
 package com.adamdbradley.midi;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
 
 import com.google.common.base.Strings;
 
@@ -27,6 +34,22 @@ public class MidiUtils {
                     .append(' ');
         }
         return sb.toString().trim();
+    }
+
+    public static Stream<MidiDevice> enumerateDevices() {
+        return Arrays.asList(MidiSystem.getMidiDeviceInfo())
+                .stream()
+                .map(MidiUtils::infoToDevice)
+                .filter(p -> p.isPresent())
+                .map(p -> p.get());
+    }
+
+    public static Optional<MidiDevice> infoToDevice(final MidiDevice.Info info) {
+        try {
+            return Optional.of(MidiSystem.getMidiDevice(info));
+        } catch (MidiUnavailableException e) {
+            return Optional.empty();
+        }
     }
 
 }

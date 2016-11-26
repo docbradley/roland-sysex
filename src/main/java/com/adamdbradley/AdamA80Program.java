@@ -9,6 +9,7 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.Receiver;
 
 import com.adamdbradley.midi.DeviceFinder;
+import com.adamdbradley.midi.MidiUtils;
 import com.adamdbradley.midi.domain.Channel;
 import com.adamdbradley.midi.domain.ContinuousControllerId;
 import com.adamdbradley.midi.domain.Note;
@@ -29,7 +30,7 @@ public class AdamA80Program {
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            DeviceFinder.enumerateDevices()
+            MidiUtils.enumerateDevices()
                     .forEach(md -> System.err.println(md.getDeviceInfo()));
         } else {
             final ProgramSender program = buildProgram(Arrays.asList(args).subList(1, args.length));
@@ -192,7 +193,7 @@ public class AdamA80Program {
     private static ZoneModelBuilder baseZone(final int channel) {
         return ZoneModel.builder()
                 .channel(Channel.of(channel))
-                .programChange(ProgramChange.of(1)) // TODO: is there a way to omit this?
+                .programChange(ProgramChange.of(1))
                 .startKey(Note.of(0)).endKey(Note.of(127))
                 .pedalControls(defaultPedalControls())
                 .sliderControls(fourOptionalsPosition((channel - 1) % 4, ContinuousControllerId.of(7))) // Volume
