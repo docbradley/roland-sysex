@@ -1,19 +1,19 @@
 package com.adamdbradley.midi.message;
 
+import java.util.Arrays;
+
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.midi.MidiUtils;
 
-import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Immutable wrapper object for {@link MidiMessage}.
  * @param <T> subclass of MidiMessage to specialize for
  */
-@EqualsAndHashCode
 @RequiredArgsConstructor
 public abstract class Message<T extends MidiMessage> {
 
@@ -33,26 +33,39 @@ public abstract class Message<T extends MidiMessage> {
                 + MidiUtils.toString(message);
     }
 
+    @Override
+    public int hashCode() {
+        return this.message.getMessage().hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object that) {
+        if (!(that instanceof Message)) {
+            return false;
+        } else {
+            return Arrays.equals(message.getMessage(),
+                    ((Message<?>) that).message.getMessage());
+        }
+    }
+
     public static Message<?> parse(final MidiMessage input) {
         if (input instanceof ShortMessage) {
             final ShortMessage message = (ShortMessage) input;
             switch (((ShortMessage) input).getCommand()) {
-            case 0b1000:
+            case ShortMessage.NOTE_OFF:
                 return new NoteOffMessage(message);
-            case 0b1001:
+            case ShortMessage.NOTE_ON:
                 return new NoteOnMessage(message);
-            case 0b1010:
+            case ShortMessage.POLY_PRESSURE:
                 return new PolyphonicKeyPressureMessage(message);
-            case 0b1011:
+            case ShortMessage.CONTROL_CHANGE:
                 return new ControlChangeMessage(message);
-            case 0b1100:
+            case ShortMessage.PROGRAM_CHANGE:
                 return new ProgramChangeMessage(message);
-            case 0b1101:
+            case ShortMessage.CHANNEL_PRESSURE:
                 return new ChannelPressureMessage(message);
-            case 0b1110:
+            case ShortMessage.PITCH_BEND:
                 return new PitchBendChangeMessage(message);
-            case 0b1111:
-                throw new IllegalArgumentException("Can't parse system common message type " + message.getCommand());
             default:
                 throw new IllegalStateException("Unknown command " + message.getCommand());
             }
