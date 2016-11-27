@@ -53,7 +53,8 @@ public class PatchModel implements com.adamdbradley.midi.sysex.roland.UpdatingMo
     @Override
     public List<Message<?>> getMessages() {
         return Collections.singletonList(
-                new RolandSysexMessage((byte) 0x0, InstrumentModel.A_80,
+                new RolandSysexMessage(null /* TODO */,
+                        (byte) 0x0, InstrumentModel.A_80,
                         new PatchDataSetCommand(patchNumber)));
     }
 

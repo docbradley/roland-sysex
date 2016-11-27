@@ -1,6 +1,7 @@
 package com.adamdbradley.midi.message;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -21,14 +22,14 @@ public class ProgramChangeMessage extends ChannelMessage {
     @Getter
     private final ProgramChange program;
 
-    public ProgramChangeMessage(final Channel channel,
+    public ProgramChangeMessage(final MidiDevice device, final Channel channel,
             final ProgramChange program) throws InvalidMidiDataException {
-        this(new ShortMessage(COMMAND, channel.getData(),
+        this(device, new ShortMessage(COMMAND, channel.getData(),
                 program.getData(), 0));
     }
 
-    protected ProgramChangeMessage(final ShortMessage message) {
-        super(message);
+    protected ProgramChangeMessage(final MidiDevice device, final ShortMessage message) {
+        super(device, message);
         if (message.getCommand() != COMMAND) {
             throw new IllegalArgumentException();
         }

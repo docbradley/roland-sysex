@@ -46,7 +46,8 @@ public class ChainModel implements UpdatingModel {
     public List<Message<?>> getMessages() {
         return buildCommands()
                 .stream()
-                .map(cmd -> new RolandSysexMessage((byte) 0,
+                .map(cmd -> new RolandSysexMessage(null /* TODO */,
+                        (byte) 0,
                         InstrumentModel.A_90,
                         cmd))
                 .collect(Collectors.toList());

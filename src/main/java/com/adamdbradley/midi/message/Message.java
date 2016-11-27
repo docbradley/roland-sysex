@@ -2,12 +2,14 @@ package com.adamdbradley.midi.message;
 
 import java.util.Arrays;
 
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.midi.MidiUtils;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -17,14 +19,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public abstract class Message<T extends MidiMessage> {
 
+    @Getter
+    private final MidiDevice device;
+
     private final T message;
 
     /**
      * Since {@link MidiMessage} isn't immutable, always vend a copy so
      * we can protect the one we own/wrap.
      */
-    public final MidiMessage getMessage() {
-        return (MidiMessage) message.clone();
+    @SuppressWarnings("unchecked")
+    public final T getMessage() {
+        return (T) message.clone();
     }
 
     @Override
@@ -48,24 +54,24 @@ public abstract class Message<T extends MidiMessage> {
         }
     }
 
-    public static Message<?> parse(final MidiMessage input) {
+    public static Message<?> parse(final MidiDevice device, final MidiMessage input) {
         if (input instanceof ShortMessage) {
             final ShortMessage message = (ShortMessage) input;
             switch (((ShortMessage) input).getCommand()) {
             case ShortMessage.NOTE_OFF:
-                return new NoteOffMessage(message);
+                return new NoteOffMessage(device, message);
             case ShortMessage.NOTE_ON:
-                return new NoteOnMessage(message);
+                return new NoteOnMessage(device, message);
             case ShortMessage.POLY_PRESSURE:
-                return new PolyphonicKeyPressureMessage(message);
+                return new PolyphonicKeyPressureMessage(device, message);
             case ShortMessage.CONTROL_CHANGE:
-                return new ControlChangeMessage(message);
+                return new ControlChangeMessage(device, message);
             case ShortMessage.PROGRAM_CHANGE:
-                return new ProgramChangeMessage(message);
+                return new ProgramChangeMessage(device, message);
             case ShortMessage.CHANNEL_PRESSURE:
-                return new ChannelPressureMessage(message);
+                return new ChannelPressureMessage(device, message);
             case ShortMessage.PITCH_BEND:
-                return new PitchBendChangeMessage(message);
+                return new PitchBendChangeMessage(device, message);
             default:
                 throw new IllegalStateException("Unknown command " + message.getCommand());
             }

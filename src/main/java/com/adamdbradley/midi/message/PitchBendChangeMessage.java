@@ -1,6 +1,7 @@
 package com.adamdbradley.midi.message;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -20,14 +21,14 @@ public class PitchBendChangeMessage extends ChannelMessage {
     @Getter
     private final int value;
 
-    public PitchBendChangeMessage(final Channel channel,
-            final int value) throws InvalidMidiDataException {
-        this(new ShortMessage(COMMAND, channel.getData(),
+    public PitchBendChangeMessage(final MidiDevice device,
+            final Channel channel, final int value) throws InvalidMidiDataException {
+        this(device, new ShortMessage(COMMAND, channel.getData(),
                 (value + 0x2000) & 0x007F, (((value + 0x2000) & 0x3F80)) >> 7));
     }
 
-    protected PitchBendChangeMessage(final ShortMessage message) {
-        super(message);
+    protected PitchBendChangeMessage(final MidiDevice device, final ShortMessage message) {
+        super(device, message);
         if (message.getCommand() != COMMAND) {
             throw new IllegalArgumentException();
         }
