@@ -8,11 +8,16 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import javax.sound.midi.MidiDevice;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * For use on a {@link Stream} of {@link Predicate}s
+ * in the {@link Stream#collect(Collector)} step.
+ */
 public class PredicateAccumulator
 implements Collector<Predicate<MidiDevice>, AtomicReference<Predicate<MidiDevice>>, Predicate<MidiDevice>> {
 
