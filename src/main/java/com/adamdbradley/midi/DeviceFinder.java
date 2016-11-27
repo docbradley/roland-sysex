@@ -10,16 +10,24 @@ import javax.sound.midi.MidiDevice;
 
 import com.adamdbradley.functional.PredicateAccumulator;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Find {@link MidiDevice}s matching particular criteria.
  */
 public class DeviceFinder {
 
+    public static final Predicate<MidiDevice> TRUE = (x) -> true;
+    public static final Predicate<MidiDevice> FALSE = (x) -> false;
     public static final Predicate<MidiDevice> MUST_HAVE_INPUT = new MustHaveInputFilter();
     public static final Predicate<MidiDevice> MUST_HAVE_OUTPUT = new MustHaveOutputFilter();
 
     public static Predicate<MidiDevice> regexFilter(final String regex) {
         return new RegexFilter(regex);
+    }
+
+    public static Predicate<MidiDevice> nameMatchFilter(final String name) {
+        return new NameMatchFilter(name);
     }
 
     public static Stream<MidiDevice> find(final Predicate<MidiDevice> predicate) {
@@ -46,6 +54,16 @@ public class DeviceFinder {
         @Override
         public boolean test(final MidiDevice md) {
             return desiredNameRegex.matcher(md.getDeviceInfo().getName()).matches();
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class NameMatchFilter implements Predicate<MidiDevice> {
+        private final String desiredName;
+
+        @Override
+        public boolean test(final MidiDevice md) {
+            return desiredName.equals(md.getDeviceInfo().getName());
         }
     }
 
