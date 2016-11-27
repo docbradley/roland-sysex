@@ -3,6 +3,7 @@ package com.adamdbradley.midi;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -15,7 +16,14 @@ import lombok.RequiredArgsConstructor;
 /**
  * Find {@link MidiDevice}s matching particular criteria.
  */
+@RequiredArgsConstructor
 public class DeviceFinder {
+
+    private final Supplier<Stream<MidiDevice>> supplier;
+
+    public DeviceFinder() {
+        supplier = MidiUtils::enumerateDevices;
+    }
 
     public static final Predicate<MidiDevice> TRUE = (x) -> true;
     public static final Predicate<MidiDevice> FALSE = (x) -> false;
@@ -30,17 +38,16 @@ public class DeviceFinder {
         return new NameMatchFilter(name);
     }
 
-    public static Stream<MidiDevice> find(final Predicate<MidiDevice> predicate) {
-        return MidiUtils.enumerateDevices()
-                .filter(predicate);
+    public Stream<MidiDevice> find(final Predicate<MidiDevice> predicate) {
+        return supplier.get().filter(predicate);
     }
 
-    public static Stream<MidiDevice> find(final List<Predicate<MidiDevice>> predicates) {
+    public Stream<MidiDevice> find(final List<Predicate<MidiDevice>> predicates) {
         return find(predicates.stream().collect(PredicateAccumulator.AND));
     }
 
     @SafeVarargs
-    public static Stream<MidiDevice> find(final Predicate<MidiDevice> ... predicates) {
+    public final Stream<MidiDevice> find(final Predicate<MidiDevice> ... predicates) {
         return find(Arrays.asList(predicates));
     }
 

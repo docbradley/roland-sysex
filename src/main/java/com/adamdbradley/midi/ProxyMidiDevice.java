@@ -32,7 +32,7 @@ public class ProxyMidiDevice implements MidiDevice, Serializable {
 
     private MidiDevice actual() {
         if (actual == null) {
-            actual = DeviceFinder
+            actual = new DeviceFinder()
                     .find(DeviceFinder.nameMatchFilter(name),
                             input ? DeviceFinder.MUST_HAVE_INPUT : DeviceFinder.TRUE,
                             output ? DeviceFinder.MUST_HAVE_OUTPUT : DeviceFinder.TRUE)

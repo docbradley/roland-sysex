@@ -34,7 +34,7 @@ public class AdamA80Program {
                     .forEach(md -> System.err.println(md.getDeviceInfo()));
         } else {
             final ProgramSender program = buildProgram(Arrays.asList(args).subList(1, args.length));
-            try (MidiDevice device = DeviceFinder.find(
+            try (MidiDevice device = new DeviceFinder().find(
                     DeviceFinder.MUST_HAVE_OUTPUT,
                     DeviceFinder.regexFilter(args[0])).findAny().get()) {
                 if (!device.isOpen()) {
