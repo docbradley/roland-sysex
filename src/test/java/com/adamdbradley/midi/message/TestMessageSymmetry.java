@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 
 import static org.junit.Assert.*;
 
-public class Symmetry {
+public class TestMessageSymmetry {
 
     @Test
     public void noteOn() throws Exception {
