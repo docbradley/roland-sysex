@@ -10,19 +10,22 @@ import java.util.stream.Stream;
 import javax.sound.midi.MidiDevice;
 
 import com.adamdbradley.functional.PredicateAccumulator;
+import com.google.common.annotations.VisibleForTesting;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Find {@link MidiDevice}s matching particular criteria.
  */
-@RequiredArgsConstructor
+@VisibleForTesting
+@RequiredArgsConstructor(access=AccessLevel.PACKAGE)
 public class DeviceFinder {
 
     private final Supplier<Stream<MidiDevice>> supplier;
 
     public DeviceFinder() {
-        supplier = MidiUtils::enumerateDevices;
+        this(MidiUtils::enumerateDevices);
     }
 
     public static final Predicate<MidiDevice> TRUE = (x) -> true;
