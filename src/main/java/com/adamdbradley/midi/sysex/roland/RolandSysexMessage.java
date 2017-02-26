@@ -1,7 +1,6 @@
 package com.adamdbradley.midi.sysex.roland;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.midi.message.Message;
@@ -13,11 +12,10 @@ import com.adamdbradley.midi.message.Message;
  */
 public class RolandSysexMessage extends Message<SysexMessage> {
 
-    public RolandSysexMessage(final MidiDevice device, 
-            final byte deviceId,
+    public RolandSysexMessage(final byte deviceId,
             final InstrumentModel model,
             final RolandSysexCommand command) {
-        super(device, build(deviceId, model, command));
+        super(build(deviceId, model, command));
     }
 
     private static SysexMessage build(final byte deviceId,

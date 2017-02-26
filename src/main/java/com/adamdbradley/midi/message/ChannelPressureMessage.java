@@ -1,7 +1,5 @@
 package com.adamdbradley.midi.message;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -17,19 +15,18 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper=true)
 public class ChannelPressureMessage extends ChannelMessage {
 
-    private static final byte COMMAND = 0b1101;
+    private static final int COMMAND = ShortMessage.CHANNEL_PRESSURE;
 
     @Getter
     private final ContinuousControlValue pressure;
 
-    public ChannelPressureMessage(final MidiDevice device, final Channel channel,
-            final ContinuousControlValue pressure) throws InvalidMidiDataException {
-        this(device,
-                new ShortMessage(COMMAND, channel.getData(), pressure.getData(), 0));
+    public ChannelPressureMessage(final Channel channel,
+            final ContinuousControlValue pressure) {
+        this(buildMessage(COMMAND, channel, pressure));
     }
 
-    protected ChannelPressureMessage(final MidiDevice device, final ShortMessage message) {
-        super(device, message);
+    protected ChannelPressureMessage(final ShortMessage message) {
+        super(message);
         if (message.getCommand() != COMMAND) {
             throw new IllegalArgumentException();
         }

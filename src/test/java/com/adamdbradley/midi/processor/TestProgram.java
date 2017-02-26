@@ -2,24 +2,15 @@ package com.adamdbradley.midi.processor;
 
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.Transmitter;
+import javax.sound.midi.MidiMessage;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.adamdbradley.midi.ProxyMidiDevice;
 import com.adamdbradley.midi.domain.Channel;
 import com.adamdbradley.midi.domain.ContinuousControlValue;
 import com.adamdbradley.midi.domain.Note;
 import com.adamdbradley.midi.domain.ProgramChange;
-import com.adamdbradley.midi.message.Message;
 import com.adamdbradley.midi.message.NoteOffMessage;
 import com.adamdbradley.midi.message.NoteOnMessage;
 import com.adamdbradley.midi.message.ProgramChangeMessage;
@@ -31,21 +22,11 @@ public class TestProgram {
 
     private static final Random rng = new Random();
 
-    final ImmutableList<MidiDevice> fakeMidiDevices = ImmutableList.of(
-            new FakeMidiDevice(),
-            new FakeMidiDevice(),
-            new FakeMidiDevice(),
-            new FakeMidiDevice());
-
-    @Before
-    public void setupFakeDeviceFinderSupplier() {
-        ProxyMidiDevice.supplier = () -> fakeMidiDevices.stream();
-    }
-
-    @After
-    public void clearDeviceFinderSupplier() {
-        ProxyMidiDevice.supplier = null;
-    }
+    final ImmutableList<DeviceDescriptor> fakeMidiDevices = ImmutableList.of(
+            DeviceDescriptor.builder().name("1").input(true).output(true).build(),
+            DeviceDescriptor.builder().name("2").input(true).output(true).build(),
+            DeviceDescriptor.builder().name("3").input(true).output(true).build(),
+            DeviceDescriptor.builder().name("4").input(true).output(true).build());
 
     @Test
     public void smokeTestMapping() throws Exception {
@@ -56,8 +37,8 @@ public class TestProgram {
                                 .recognizer((mm) -> mm.getDevice() == fakeMidiDevices.get(0))
                                 .mapper((mm) -> ImmutableList
                                         .of(
-                                                mm.reroute(fakeMidiDevices.get(2)),
-                                                mm.reroute(fakeMidiDevices.get(3))
+                                                new ProgramMessage(fakeMidiDevices.get(2), mm.getMessage()),
+                                                new ProgramMessage(fakeMidiDevices.get(3), mm.getMessage())
                                         ))
                                 .build()
                 ));
@@ -66,9 +47,9 @@ public class TestProgram {
         assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(2))).isEmpty());
         assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(3))).isEmpty());
 
-        final Message<?> msg = randomNoteMessage(fakeMidiDevices.get(0));
+        final ProgramMessage msg = randomNoteMessage(fakeMidiDevices.get(0));
 
-        final List<Message<?>> mapped = program.process(msg);
+        final List<ProgramMessage> mapped = program.process(msg);
         assertEquals(2, mapped.size());
         assertSame(fakeMidiDevices.get(2), mapped.get(0).getDevice());
         assertArrayEquals(msg.getMessage().getMessage(), mapped.get(0).getMessage().getMessage());
@@ -77,89 +58,24 @@ public class TestProgram {
     }
 
 
-    private static Message<?> randomNoteMessage(final MidiDevice device) {
+    private static ProgramMessage randomNoteMessage(final DeviceDescriptor device) {
+        return new ProgramMessage(device, randomMessage());
+    }
+
+    private static MidiMessage randomMessage() {
         switch (rng.nextInt(3)) {
             case 0:
-                return new NoteOnMessage(device, Channel.of(rng.nextInt(16) + 1),
-                        Note.of(rng.nextInt(128)), ContinuousControlValue.of(rng.nextInt(128)));
+                return new NoteOnMessage(Channel.of(rng.nextInt(16) + 1),
+                        Note.of(rng.nextInt(128)), ContinuousControlValue.of(rng.nextInt(128))).getMessage();
             case 1:
-                return new NoteOffMessage(device, Channel.of(rng.nextInt(16) + 1),
-                        Note.of(rng.nextInt(128)), ContinuousControlValue.of(rng.nextInt(128)));
+                return new NoteOffMessage(Channel.of(rng.nextInt(16) + 1),
+                        Note.of(rng.nextInt(128)), ContinuousControlValue.of(rng.nextInt(128))).getMessage();
             case 2:
-                return new ProgramChangeMessage(device, Channel.of(rng.nextInt(16) + 1),
-                        ProgramChange.of(rng.nextInt(128) + 1));
+                return new ProgramChangeMessage(Channel.of(rng.nextInt(16) + 1),
+                        ProgramChange.of(rng.nextInt(128) + 1)).getMessage();
             default:
                 throw new IllegalStateException();
         }
     }
-
-
-    private static final AtomicInteger sequence = new AtomicInteger(0);
-
-    private class FakeMidiDevice implements MidiDevice {
-
-        private final MidiDevice.Info info = new Info("" + sequence.getAndIncrement() + "/" + UUID.randomUUID(),
-                "adamdbradley.com",
-                "A pretend MIDI device",
-                "0.0.0.0") {};
-
-        @Override
-        public String toString() {
-            return getDeviceInfo().toString();
-        }
-
-        @Override
-        public Info getDeviceInfo() {
-            return info;
-        }
-
-        @Override
-        public void close() {
-        }
-
-        @Override
-        public int getMaxReceivers() {
-            return 1;
-        }
-
-        @Override
-        public int getMaxTransmitters() {
-            return 1;
-        }
-
-        @Override
-        public long getMicrosecondPosition() {
-            return 0;
-        }
-
-        @Override
-        public Receiver getReceiver() throws MidiUnavailableException {
-            return null;
-        }
-
-        @Override
-        public List<Receiver> getReceivers() {
-            return null;
-        }
-
-        @Override
-        public Transmitter getTransmitter() throws MidiUnavailableException {
-            return null;
-        }
-
-        @Override
-        public List<Transmitter> getTransmitters() {
-            return null;
-        }
-
-        @Override
-        public boolean isOpen() {
-            return false;
-        }
-
-        @Override
-        public void open() throws MidiUnavailableException {
-        }
-    };
 
 }

@@ -1,6 +1,5 @@
 package com.adamdbradley.midi.message;
 
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -18,8 +17,8 @@ public abstract class ChannelMessage extends Message<ShortMessage> {
     @Getter
     private final Channel channel;
 
-    protected ChannelMessage(final MidiDevice device, final ShortMessage message) {
-        super(device, message);
+    protected ChannelMessage(final ShortMessage message) {
+        super(message);
         channel = Channel.of(message.getChannel() + 1);
     }
 

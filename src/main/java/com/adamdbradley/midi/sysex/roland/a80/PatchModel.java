@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,9 +51,8 @@ public class PatchModel implements com.adamdbradley.midi.sysex.roland.UpdatingMo
 
     @Override
     public List<Message<?>> getMessages() {
-        return Collections.singletonList(
-                new RolandSysexMessage(null /* TODO */,
-                        (byte) 0x0, InstrumentModel.A_80,
+        return ImmutableList.of(
+                new RolandSysexMessage((byte) 0x0, InstrumentModel.A_80,
                         new PatchDataSetCommand(patchNumber)));
     }
 

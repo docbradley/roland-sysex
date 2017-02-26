@@ -16,8 +16,12 @@ import com.google.common.collect.ImmutableList;
  * a list (potentially empty) of the same.
  */
 @FunctionalInterface
-public interface Mapper extends Function<Message<?>, List<Message<?>>>, Serializable {
+public interface Mapper extends Function<ProgramMessage, List<ProgramMessage>>, Serializable {
 
     public static Mapper IDENTITY = ImmutableList::of;
+
+    public static Mapper route(final DeviceDescriptor output) {
+        return (m) -> ImmutableList.of(new ProgramMessage(output, m.getMessage()));
+    }
 
 }

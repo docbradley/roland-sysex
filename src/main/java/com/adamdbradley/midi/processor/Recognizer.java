@@ -13,5 +13,5 @@ import com.adamdbradley.midi.message.Message;
  * (a tuple of a {@link MidiDevice} and a {@link MidiMessage}).
  */
 @FunctionalInterface
-public interface Recognizer extends Predicate<Message<?>>, Serializable {
+public interface Recognizer extends Predicate<ProgramMessage>, Serializable {
 }

@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 @Builder
-public class Rule implements Serializable {
+public final class Rule implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

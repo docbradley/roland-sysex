@@ -3,15 +3,14 @@ package com.adamdbradley.midi.message;
 import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.midi.MidiUtils;
 import com.adamdbradley.midi.domain.Channel;
+import com.adamdbradley.midi.domain.SingleSevenBitData;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -20,9 +19,6 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public abstract class Message<T extends MidiMessage> {
-
-    @Getter
-    private final MidiDevice device;
 
     private final T message;
 
@@ -56,24 +52,24 @@ public abstract class Message<T extends MidiMessage> {
         }
     }
 
-    public static Message<?> parse(final MidiDevice device, final MidiMessage input) {
+    public static Message<?> parse(final MidiMessage input) {
         if (input instanceof ShortMessage) {
             final ShortMessage message = (ShortMessage) input;
             switch (((ShortMessage) input).getCommand()) {
             case ShortMessage.NOTE_OFF:
-                return new NoteOffMessage(device, message);
+                return new NoteOffMessage(message);
             case ShortMessage.NOTE_ON:
-                return new NoteOnMessage(device, message);
+                return new NoteOnMessage(message);
             case ShortMessage.POLY_PRESSURE:
-                return new PolyphonicKeyPressureMessage(device, message);
+                return new PolyphonicKeyPressureMessage(message);
             case ShortMessage.CONTROL_CHANGE:
-                return new ControlChangeMessage(device, message);
+                return new ControlChangeMessage(message);
             case ShortMessage.PROGRAM_CHANGE:
-                return new ProgramChangeMessage(device, message);
+                return new ProgramChangeMessage(message);
             case ShortMessage.CHANNEL_PRESSURE:
-                return new ChannelPressureMessage(device, message);
+                return new ChannelPressureMessage(message);
             case ShortMessage.PITCH_BEND:
-                return new PitchBendChangeMessage(device, message);
+                return new PitchBendChangeMessage(message);
             default:
                 throw new IllegalStateException("Unknown command " + message.getCommand());
             }
@@ -84,18 +80,20 @@ public abstract class Message<T extends MidiMessage> {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public Message<T> reroute(final MidiDevice newDevice) {
-        return (Message<T>) parse(newDevice, getMessage());
-    }
-
     protected static ShortMessage buildMessage(final int command,
-            final Channel channel, final byte data0, final byte data1) {
+            final Channel channel,
+            final SingleSevenBitData data0, final SingleSevenBitData data1) {
         try {
-            return new ShortMessage(command, channel.getData(), data0, data1);
+            return new ShortMessage(command, channel.getData(), data0.getData(), data1.getData());
         } catch (InvalidMidiDataException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    protected static ShortMessage buildMessage(final int command,
+            final Channel channel,
+            final SingleSevenBitData data0) {
+        return buildMessage(command, channel, data0, new SingleSevenBitData(false, "NOOP", 0) {});
     }
 
 }

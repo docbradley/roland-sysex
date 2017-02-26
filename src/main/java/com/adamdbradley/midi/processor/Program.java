@@ -19,15 +19,15 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 @Builder
-public class Program implements Serializable {
+public final class Program implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Nonnull @NonNull
     private final Iterable<Rule> rules;
 
-    public List<Message<?>> process(final Message<?> message) {
-        final ImmutableList.Builder<Message<?>> builder = ImmutableList.builder();
+    public List<ProgramMessage> process(final ProgramMessage message) {
+        final ImmutableList.Builder<ProgramMessage> builder = ImmutableList.builder();
         for (Rule rule: rules) {
             if (rule.getRecognizer().test(message)) {
                 builder.addAll(rule.getMapper().apply(message));
