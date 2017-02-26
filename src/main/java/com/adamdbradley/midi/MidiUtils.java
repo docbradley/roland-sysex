@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
@@ -23,7 +24,7 @@ public class MidiUtils {
      * @param message
      * @return
      */
-    public static String toString(final MidiMessage message) {
+    public static String toString(@Nonnull final MidiMessage message) {
         final StringBuilder sb = new StringBuilder();
         // J8 streams don't support byte arrays...
         for (int i=0; i<message.getLength(); i++) {
@@ -36,15 +37,19 @@ public class MidiUtils {
         return sb.toString().trim();
     }
 
-    public static Stream<MidiDevice> enumerateDevices() {
+    public static Stream<MidiDevice.Info> enumerateDeviceInfo() {
         return Arrays.asList(MidiSystem.getMidiDeviceInfo())
-                .stream()
+                .stream();
+    }
+
+    public static Stream<MidiDevice> enumerateDevices() {
+        return enumerateDeviceInfo()
                 .map(MidiUtils::infoToDevice)
                 .filter(p -> p.isPresent())
                 .map(p -> p.get());
     }
 
-    public static Optional<MidiDevice> infoToDevice(final MidiDevice.Info info) {
+    public static Optional<MidiDevice> infoToDevice(@Nonnull final MidiDevice.Info info) {
         try {
             return Optional.of(MidiSystem.getMidiDevice(info));
         } catch (MidiUnavailableException e) {
