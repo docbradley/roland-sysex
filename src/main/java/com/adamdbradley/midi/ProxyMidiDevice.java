@@ -2,16 +2,21 @@ package com.adamdbradley.midi;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.Transmitter;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.RequiredArgsConstructor;
 
 /**
- * Wrap {@link MidiDevice} to make it {@link Serializable}
+ * Wrap {@link MidiDevice} to make it {@link Serializable}.
  */
 @RequiredArgsConstructor
 public class ProxyMidiDevice implements MidiDevice, Serializable {
@@ -22,22 +27,39 @@ public class ProxyMidiDevice implements MidiDevice, Serializable {
     private final boolean input;
     private final boolean output;
 
+    @VisibleForTesting
+    public static Supplier<Stream<MidiDevice>> supplier;
+ 
+    /**
+     * Always access via {@link #actual()}.
+     */
+    private transient MidiDevice actual = null;
+
     public ProxyMidiDevice(final MidiDevice device) {
         this(device.getDeviceInfo().getName(),
                 device.getMaxTransmitters() != 0,
                 device.getMaxReceivers() != 0);
     }
 
-    private transient MidiDevice actual = null;
-
-    private MidiDevice actual() {
+    @VisibleForTesting
+    MidiDevice actual() {
         if (actual == null) {
-            actual = new DeviceFinder()
-                    .find(DeviceFinder.nameMatchFilter(name),
-                            input ? DeviceFinder.MUST_HAVE_INPUT : DeviceFinder.TRUE,
-                            output ? DeviceFinder.MUST_HAVE_OUTPUT : DeviceFinder.TRUE)
-                    .findFirst()
-                    .get();
+            try {
+                final DeviceFinder finder;
+                if (supplier == null) {
+                    finder = new DeviceFinder();
+                } else {
+                    finder = new DeviceFinder(supplier);
+                }
+                actual = finder
+                        .find(DeviceFinder.nameMatchFilter(name),
+                                input ? DeviceFinder.MUST_HAVE_INPUT : DeviceFinder.TRUE,
+                                output ? DeviceFinder.MUST_HAVE_OUTPUT : DeviceFinder.TRUE)
+                        .findFirst()
+                        .get();
+            } catch (NoSuchElementException e) {
+                throw new IllegalStateException("Can't find MIDI device {" + name + "}");
+            }
         }
         return actual;
     }
