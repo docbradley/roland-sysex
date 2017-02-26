@@ -1,6 +1,5 @@
 package com.adamdbradley.midi.message;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -21,6 +20,9 @@ public abstract class NoteMessage extends ChannelMessage {
     @Getter
     private final Note note;
 
+    /**
+     * Velocity/pressure
+     */
     @Getter
     private final ContinuousControlValue value;
 
@@ -32,10 +34,8 @@ public abstract class NoteMessage extends ChannelMessage {
 
     public NoteMessage(final MidiDevice device,
             final int command, final Channel channel,
-            final Note note, final ContinuousControlValue velocity)
-                    throws InvalidMidiDataException {
-        this(device, new ShortMessage(command, channel.getData(),
-                note.getData(), velocity.getData()));
+            final Note note, final ContinuousControlValue velocity) {
+        this(device, buildMessage(command, channel, note.getData(), velocity.getData()));
     }
 
 }

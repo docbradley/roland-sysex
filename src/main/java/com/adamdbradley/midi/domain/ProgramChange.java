@@ -7,7 +7,7 @@ package com.adamdbradley.midi.domain;
 public class ProgramChange extends SingleSevenBitData {
 
     private ProgramChange(final int data) {
-        super("PC" + (data + 1), data);
+        super(true, "PC" + (data + 1), data);
     }
 
     private static final ProgramChange[] pc;

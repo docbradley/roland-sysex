@@ -9,7 +9,7 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
 public class CurveParameterValue extends SingleSevenBitData {
 
     private CurveParameterValue(final int data) {
-        super("CurveParam" + data, data);
+        super(false, "CurveParam" + data, data);
     }
 
     private static final CurveParameterValue[] paramValues;

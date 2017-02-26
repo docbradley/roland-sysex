@@ -70,7 +70,7 @@ public class ContinuousControllerId extends SingleSevenBitData {
     }
 
     private ContinuousControllerId(final int data) {
-        super("CC" + data, data);
+        super(false, "CC" + data, data);
     }
 
     private static final ContinuousControllerId controllerIds[];

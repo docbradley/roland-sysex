@@ -36,7 +36,7 @@ public class Note extends SingleSevenBitData {
     };
 
     private Note(final int data) {
-        super(noteName[data % 12] + ((data / 12) - 2), data);
+        super(false, noteName[data % 12] + ((data / 12) - 2), data);
     }
 
     private static final Note[] noteValues;

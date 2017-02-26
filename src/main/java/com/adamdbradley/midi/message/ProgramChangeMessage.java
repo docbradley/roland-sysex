@@ -1,6 +1,5 @@
 package com.adamdbradley.midi.message;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -17,15 +16,14 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper=true)
 public class ProgramChangeMessage extends ChannelMessage {
 
-    private static final byte COMMAND = 0b1100;
+    private static final int COMMAND = ShortMessage.PROGRAM_CHANGE;
 
     @Getter
     private final ProgramChange program;
 
     public ProgramChangeMessage(final MidiDevice device, final Channel channel,
-            final ProgramChange program) throws InvalidMidiDataException {
-        this(device, new ShortMessage(COMMAND, channel.getData(),
-                program.getData(), 0));
+            final ProgramChange program) {
+        this(device, buildMessage(COMMAND, channel, program.getData(), (byte) 0));
     }
 
     protected ProgramChangeMessage(final MidiDevice device, final ShortMessage message) {

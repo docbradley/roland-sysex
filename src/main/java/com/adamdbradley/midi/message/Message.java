@@ -2,19 +2,21 @@ package com.adamdbradley.midi.message;
 
 import java.util.Arrays;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.SysexMessage;
 
 import com.adamdbradley.midi.MidiUtils;
+import com.adamdbradley.midi.domain.Channel;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Immutable wrapper object for {@link MidiMessage}.
- * @param <T> subclass of MidiMessage to specialize for
+ * @param <T> For cases where subtyping is meaningful (mostly sysex)
  */
 @RequiredArgsConstructor
 public abstract class Message<T extends MidiMessage> {
@@ -79,6 +81,20 @@ public abstract class Message<T extends MidiMessage> {
             throw new IllegalArgumentException("Can't parse sysex");
         } else {
             throw new IllegalArgumentException("Unknown type: " + input.getClass().getSimpleName());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Message<T> reroute(final MidiDevice newDevice) {
+        return (Message<T>) parse(newDevice, getMessage());
+    }
+
+    protected static ShortMessage buildMessage(final int command,
+            final Channel channel, final byte data0, final byte data1) {
+        try {
+            return new ShortMessage(command, channel.getData(), data0, data1);
+        } catch (InvalidMidiDataException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 

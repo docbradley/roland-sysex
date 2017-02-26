@@ -7,7 +7,7 @@ package com.adamdbradley.midi.domain;
 public class Channel extends SingleSevenBitData {
 
     private Channel(final int data) {
-        super("Ch" + (data+1), data, 0x0000000F);
+        super(true, "Ch" + (data+1), data, 0x0000000F);
     }
 
     private static final Channel[] channels;

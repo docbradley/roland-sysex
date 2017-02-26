@@ -7,11 +7,11 @@ package com.adamdbradley.midi.domain;
 public class ContinuousControlValue extends SingleSevenBitData {
 
     protected ContinuousControlValue(final String name, final int data) {
-        super(name, data);
+        super(false, name, data);
     }
 
     public ContinuousControlValue(final int data) {
-        super("Val" + data, data);
+        super(false, "Val" + data, data);
     }
 
     private static final ContinuousControlValue controlValues[];

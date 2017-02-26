@@ -9,7 +9,7 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
 public class CentControlValue extends SingleSevenBitData {
 
     private CentControlValue(final int data) {
-        super("Ctrl" + (data - 14) + "%", data, 0x0000007F);
+        super(false, "Ctrl" + (data - 14) + "%", data, 0x0000007F);
     }
 
     private static final CentControlValue centControlValues[];

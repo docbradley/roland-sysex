@@ -9,7 +9,7 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
 public class EQBiasControlValue extends SingleSevenBitData {
 
     private EQBiasControlValue(final int data) {
-        super("DBBias" + (data - 15), data, 0x0000007F);
+        super(false, "DBBias" + (data - 15), data, 0x0000007F);
     }
 
     private static final EQBiasControlValue eqs[];

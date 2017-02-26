@@ -10,7 +10,7 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
 public class PatchNumber extends SingleSevenBitData {
 
     private PatchNumber(final int data) {
-        super("A80P" + (data + 1), data, 0x0000003F);
+        super(true, "A80P" + (data + 1), data, 0x0000003F);
     }
 
     private static final PatchNumber[] patchValues;
