@@ -21,7 +21,6 @@ public final class RealizedProgram {
     public List<ContextualMessage> process(final ContextualMessage input) {
         return program
                 .process(ProgramMessage.fromMessage(input))
-                .stream()
                 .map(ProgramMessage::toContextualMessage)
                 .collect(Collectors.toList());
     }

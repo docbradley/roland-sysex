@@ -2,6 +2,7 @@ package com.adamdbradley.midi.processor;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiMessage;
 
@@ -43,13 +44,13 @@ public class TestProgram {
                                 .build()
                 ));
 
-        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(1))).isEmpty());
-        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(2))).isEmpty());
-        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(3))).isEmpty());
+        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(1))).count() == 0);
+        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(2))).count() == 0);
+        assertTrue(program.process(randomNoteMessage(fakeMidiDevices.get(3))).count() == 0);
 
         final ProgramMessage msg = randomNoteMessage(fakeMidiDevices.get(0));
 
-        final List<ProgramMessage> mapped = program.process(msg);
+        final List<ProgramMessage> mapped = program.process(msg).collect(Collectors.toList());
         assertEquals(2, mapped.size());
         assertSame(fakeMidiDevices.get(2), mapped.get(0).getDevice());
         assertArrayEquals(msg.getMessage().getMessage(), mapped.get(0).getMessage().getMessage());

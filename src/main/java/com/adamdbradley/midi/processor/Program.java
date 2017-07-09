@@ -1,7 +1,7 @@
 package com.adamdbradley.midi.processor;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -26,14 +26,15 @@ public final class Program implements Serializable {
     @Nonnull @NonNull
     private final Iterable<Rule> rules;
 
-    public List<ProgramMessage> process(final ProgramMessage message) {
+    public Stream<ProgramMessage> process(final ProgramMessage message) {
         final ImmutableList.Builder<ProgramMessage> builder = ImmutableList.builder();
         for (Rule rule: rules) {
             if (rule.getRecognizer().test(message)) {
                 builder.addAll(rule.getMapper().apply(message));
             }
         }
-        return builder.build();
+        // TODO: lambda-ize the above
+        return builder.build().stream();
     }
 
 }
