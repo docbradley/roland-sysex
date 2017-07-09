@@ -15,7 +15,7 @@ public final class FakeMidiDevice implements MidiDevice {
 
     private static final AtomicInteger sequence = new AtomicInteger(0);
 
-    private final MidiDevice.Info info = new MidiDevice.Info("" + sequence.getAndIncrement() + "/" + UUID.randomUUID(),
+    private final MidiDevice.Info info = new MidiDevice.Info(Integer.toString(sequence.getAndIncrement()) + "/" + UUID.randomUUID(),
             "adamdbradley.com",
             "A pretend MIDI device",
             "0.0.0.0") {};
