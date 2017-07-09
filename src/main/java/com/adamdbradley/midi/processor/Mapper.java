@@ -4,16 +4,16 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.function.Function;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiMessage;
-
-import com.adamdbradley.midi.message.Message;
 import com.google.common.collect.ImmutableList;
 
 /**
- * Marker interface for the ability to transform one {@link Message}
- * (a tuple of a {@link MidiDevice} and a {@link MidiMessage}) into
- * a list (potentially empty) of the same.
+ * Marker interface for the ability to transform one
+ * {@link ProgramMessage} into a (potentially empty)
+ * list of the same.  Can encapsulate routing,
+ * transformation, muxing/demuxing, etc.
+ * A {@link Mapper} MAY be stateful, but this should
+ * be done advisedly since there is no panic mechanism
+ * to signal a reset should its state become incorrect.
  */
 @FunctionalInterface
 public interface Mapper extends Function<ProgramMessage, List<ProgramMessage>>, Serializable {
