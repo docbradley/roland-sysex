@@ -1,4 +1,4 @@
-package com.adamdbradley;
+package com.adamdbradley.midi.util;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
