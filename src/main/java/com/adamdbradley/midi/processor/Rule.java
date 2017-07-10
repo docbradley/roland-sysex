@@ -1,6 +1,7 @@
 package com.adamdbradley.midi.processor;
 
 import java.io.Serializable;
+import java.util.stream.Stream;
 
 import com.adamdbradley.midi.domain.Channel;
 import com.adamdbradley.midi.domain.ContinuousControllerId;
@@ -29,17 +30,26 @@ public final class Rule implements Serializable {
     private final Recognizer recognizer;
     private final Mapper mapper;
 
+    public Stream<ProgramMessage> process(final ProgramMessage message) {
+        if (recognizer.test(message)) {
+            return mapper.apply(message).stream();
+        } else {
+            return Stream.empty();
+        }
+    }
+
     public static Rule reactor(final DeviceDescriptor device,
             final Channel channel,
             final ContinuousControllerId ccId,
             final boolean onOff,
             final ImmutableList<ProgramMessage> response) {
         return Rule.builder()
-                .recognizer(x -> x.toParsed(ControlChangeMessage.class)
-                        .filter(ccm -> ccm.getChannel() == channel)
-                        .filter(ccm -> ccm.getController() == ccId)
-                        .filter(ccm -> (ccm.getValue().getData() & 0x40) == (onOff ? 0x40 : 0x00)) // FIXME: 0x40 or 0x80?
-                        .isPresent())
+                .recognizer(x -> x.getDevice().equals(device) &&
+                        x.toParsed(ControlChangeMessage.class)
+                                .filter(ccm -> ccm.getChannel() == channel)
+                                .filter(ccm -> ccm.getController() == ccId)
+                                .filter(ccm -> (ccm.getValue().getData() & 0x40) == (onOff ? 0x40 : 0x00))
+                                .isPresent())
                 .mapper(x -> response)
                 .build();
     }
@@ -49,10 +59,11 @@ public final class Rule implements Serializable {
             final ProgramChange program,
             final ImmutableList<ProgramMessage> response) {
         return Rule.builder()
-                .recognizer(x -> x.toParsed(ProgramChangeMessage.class)
-                        .filter(pcm -> pcm.getChannel() == channel)
-                        .filter(pcm -> pcm.getProgram() == program)
-                        .isPresent())
+                .recognizer(x -> x.getDevice().equals(device) &&
+                        x.toParsed(ProgramChangeMessage.class)
+                                .filter(pcm -> pcm.getChannel() == channel)
+                                .filter(pcm -> pcm.getProgram() == program)
+                                .isPresent())
                 .mapper(x -> response)
                 .build();
     }
@@ -64,18 +75,20 @@ public final class Rule implements Serializable {
             final ImmutableList<ProgramMessage> response) {
         if (onOff) {
             return Rule.builder()
-                    .recognizer(x -> x.toParsed(NoteOnMessage.class)
-                            .filter(nom -> nom.getChannel() == channel)
-                            .filter(nom -> nom.getNote() == note)
-                            .isPresent())
+                    .recognizer(x -> x.getDevice().equals(device) &&
+                            x.toParsed(NoteOnMessage.class)
+                                    .filter(nom -> nom.getChannel() == channel)
+                                    .filter(nom -> nom.getNote() == note)
+                                    .isPresent())
                     .mapper(x -> response)
                     .build();
         } else {
             return Rule.builder()
-                    .recognizer(x -> x.toParsed(NoteOffMessage.class)
-                            .filter(nom -> nom.getChannel() == channel)
-                            .filter(nom -> nom.getNote() == note)
-                            .isPresent())
+                    .recognizer(x -> x.getDevice().equals(device) &&
+                            x.toParsed(NoteOffMessage.class)
+                                    .filter(nom -> nom.getChannel() == channel)
+                                    .filter(nom -> nom.getNote() == note)
+                                    .isPresent())
                     .mapper(x -> response)
                     .build();
         }
