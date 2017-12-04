@@ -45,7 +45,7 @@ public class BuildRigProgram {
                                 .recognizer(Recognizer.EVERYTHING) // recognize everything
                                 .mapper(x -> ImmutableList.of()) // discard everything
                                 .build(),
-                        Rule.reactor(muxIn[0],
+                        Rule.reactor(muxIn[6],
                                 Channel.of(16),
                                 ProgramChange.of(1),
                                 ImmutableList.of(
