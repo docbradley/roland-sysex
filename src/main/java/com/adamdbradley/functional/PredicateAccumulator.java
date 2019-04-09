@@ -22,10 +22,12 @@ implements Collector<Predicate<T>, AtomicReference<Predicate<T>>, Predicate<T>> 
     private static PredicateAccumulator<?> AND = new PredicateAccumulator<>(true);
     private static PredicateAccumulator<?> OR = new PredicateAccumulator<>(false);
 
+    @SuppressWarnings("unchecked")
     public static <T> PredicateAccumulator<T> and() {
         return (PredicateAccumulator<T>) AND;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> PredicateAccumulator<T> or() {
         return (PredicateAccumulator<T>) OR;
     }
