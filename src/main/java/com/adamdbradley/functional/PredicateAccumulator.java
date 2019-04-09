@@ -10,19 +10,25 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import javax.sound.midi.MidiDevice;
-
 import com.google.common.collect.ImmutableSet;
 
 /**
  * For use on a {@link Stream} of {@link Predicate}s
  * in the {@link Stream#collect(Collector)} step.
  */
-public class PredicateAccumulator
-implements Collector<Predicate<MidiDevice>, AtomicReference<Predicate<MidiDevice>>, Predicate<MidiDevice>> {
+public class PredicateAccumulator<T>
+implements Collector<Predicate<T>, AtomicReference<Predicate<T>>, Predicate<T>> {
 
-    public static PredicateAccumulator AND = new PredicateAccumulator(true);
-    public static PredicateAccumulator OR = new PredicateAccumulator(false);
+    private static PredicateAccumulator<?> AND = new PredicateAccumulator<>(true);
+    private static PredicateAccumulator<?> OR = new PredicateAccumulator<>(false);
+
+    public static <T> PredicateAccumulator<T> and() {
+        return (PredicateAccumulator<T>) AND;
+    }
+
+    public static <T> PredicateAccumulator<T> or() {
+        return (PredicateAccumulator<T>) AND;
+    }
 
     private final boolean and;
 
@@ -36,20 +42,20 @@ implements Collector<Predicate<MidiDevice>, AtomicReference<Predicate<MidiDevice
     }
 
     @Override
-    public Supplier<AtomicReference<Predicate<MidiDevice>>> supplier() {
-        return () -> { return new AtomicReference<Predicate<MidiDevice>>(); };
+    public Supplier<AtomicReference<Predicate<T>>> supplier() {
+        return () -> { return new AtomicReference<Predicate<T>>(); };
     }
 
     @Override
-    public BiConsumer<AtomicReference<Predicate<MidiDevice>>, Predicate<MidiDevice>> accumulator() {
+    public BiConsumer<AtomicReference<Predicate<T>>, Predicate<T>> accumulator() {
         return (existing, newPredicate) -> {
             if (existing.get() == null) {
                 existing.set(newPredicate);
             } else {
-                final Predicate<MidiDevice> old = existing.get();
-                existing.set(new Predicate<MidiDevice>() {
+                final Predicate<T> old = existing.get();
+                existing.set(new Predicate<T>() {
                     @Override
-                    public boolean test(final MidiDevice t) {
+                    public boolean test(final T t) {
                         if (and) {
                             return old.test(t) && newPredicate.test(t);
                         } else {
@@ -62,15 +68,15 @@ implements Collector<Predicate<MidiDevice>, AtomicReference<Predicate<MidiDevice
     }
 
     @Override
-    public BinaryOperator<AtomicReference<Predicate<MidiDevice>>> combiner() {
+    public BinaryOperator<AtomicReference<Predicate<T>>> combiner() {
         return (r1, r2) -> {
             if (r1.get() == null) {
                 return r2;
             } else if (r2.get() == null) {
                 return r1;
             } else {
-                final Predicate<MidiDevice> p1 = r1.get();
-                final Predicate<MidiDevice> p2 = r2.get();
+                final Predicate<T> p1 = r1.get();
+                final Predicate<T> p2 = r2.get();
                 if (and) {
                     return new AtomicReference<>(md -> { return p1.test(md) && p2.test(md); });
                 } else {
@@ -81,7 +87,7 @@ implements Collector<Predicate<MidiDevice>, AtomicReference<Predicate<MidiDevice
     }
 
     @Override
-    public Function<AtomicReference<Predicate<MidiDevice>>, Predicate<MidiDevice>> finisher() {
+    public Function<AtomicReference<Predicate<T>>, Predicate<T>> finisher() {
         return (r) -> {
             if (r.get() == null) {
                 return (md) -> true;

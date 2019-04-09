@@ -46,7 +46,7 @@ public class DeviceFinder {
     }
 
     public Stream<MidiDevice> find(final List<Predicate<MidiDevice>> predicates) {
-        return find(predicates.stream().collect(PredicateAccumulator.AND));
+        return find(predicates.stream().collect(PredicateAccumulator.and()));
     }
 
     @SafeVarargs
