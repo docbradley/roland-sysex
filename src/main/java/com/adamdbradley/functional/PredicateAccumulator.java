@@ -27,7 +27,7 @@ implements Collector<Predicate<T>, AtomicReference<Predicate<T>>, Predicate<T>> 
     }
 
     public static <T> PredicateAccumulator<T> or() {
-        return (PredicateAccumulator<T>) AND;
+        return (PredicateAccumulator<T>) OR;
     }
 
     private final boolean and;
