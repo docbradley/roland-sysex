@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * Represents a single "patch" for the A-80 controller.
  */
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode
 @Getter
 @RequiredArgsConstructor

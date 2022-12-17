@@ -70,8 +70,7 @@ public class AdamA80Program {
     private static PatchModel buildPatch(final int i) {
         switch(i) {
         case 1:
-            return PatchModel.builder()
-                    .patchNumber(PatchNumber.of(1))
+            return defaultPatch(1)
                     .patchName("Heather Piano")
                     .midiOutputUnmuted(BitSet.valueOf(new long[] { 0x1 }))
                     .zones(ImmutableList.of(
@@ -83,11 +82,11 @@ public class AdamA80Program {
                                     .programChange(ProgramChange.of(1))
                                     .pedalControls(defaultPedalControls())
                                     .sliderControls(ImmutableList.of(
-                                            Optional.of(ContinuousControllerId.of(7)), // Volume
+                                            Optional.of(ContinuousControllerId.StandardControllers.Volume.get()),
                                             Optional.empty(), Optional.empty(), Optional.empty()
                                             ))
                                     .switchControls(ImmutableList.of(
-                                            Optional.of(ContinuousControllerId.of(65)), // Portamento
+                                            Optional.of(ContinuousControllerId.StandardControllers.HoldPedal.get()),
                                             Optional.empty(), Optional.empty(), Optional.empty()
                                             ))
                                     .build(),
@@ -110,7 +109,8 @@ public class AdamA80Program {
                     .build();
         case 2: case 3: case 4: case 5: case 6: case 7: case 8:
         case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-            return defaultPatch(i);
+            return defaultPatch(i)
+                    .build();
         case 17:
             return basePatch(17, "MIDI 1:01-04", 1)
                     .midiOutputUnmuted(BitSet.valueOf(new long[] { 0x1 }))
@@ -176,7 +176,8 @@ public class AdamA80Program {
                     .midiOutputUnmuted(BitSet.valueOf(new long[] { 0x8 }))
                     .build();
         default:
-            return defaultPatch(i);
+            return defaultPatch(i)
+                    .build();
         }
     }
 
@@ -193,11 +194,14 @@ public class AdamA80Program {
     private static ZoneModelBuilder baseZone(final int channel) {
         return ZoneModel.builder()
                 .channel(Channel.of(channel))
+                .programChangePresentation(ZoneModel.ProgramChangePresentation.Decimal128)
                 .programChange(ProgramChange.of(1))
                 .startKey(Note.of(0)).endKey(Note.of(127))
                 .pedalControls(defaultPedalControls())
-                .sliderControls(fourOptionalsPosition((channel - 1) % 4, ContinuousControllerId.of(7))) // Volume
-                .switchControls(fourOptionalsPosition((channel - 1) % 4, ContinuousControllerId.of(66))) // Sostenudo
+                .sliderControls(fourOptionalsPosition((channel - 1) % 4,
+                        ContinuousControllerId.StandardControllers.Volume.get()))
+                .switchControls(fourOptionalsPosition((channel - 1) % 4,
+                        ContinuousControllerId.StandardControllers.HoldPedal.get()))
                 .unmuted(true)
                 .volume(Volume.of(100));
     }
@@ -224,7 +228,7 @@ public class AdamA80Program {
                 );
     }
 
-    private static PatchModel defaultPatch(final int patchNumber) {
+    private static PatchModel.PatchModelBuilder defaultPatch(final int patchNumber) {
         return PatchModel.builder()
                 .patchNumber(PatchNumber.of(patchNumber))
                 .patchName("Default    (ADB)")
@@ -235,11 +239,11 @@ public class AdamA80Program {
                                 .volume(Volume.of(127))
                                 .pedalControls(defaultPedalControls())
                                 .sliderControls(ImmutableList.of(
-                                        Optional.of(ContinuousControllerId.of(7)), // Volume
+                                        Optional.of(ContinuousControllerId.StandardControllers.Volume.get()),
                                         Optional.empty(), Optional.empty(), Optional.empty()
                                         ))
                                 .switchControls(ImmutableList.of(
-                                        Optional.of(ContinuousControllerId.of(65)), // Portamento
+                                        Optional.of(ContinuousControllerId.StandardControllers.HoldPedal.get()),
                                         Optional.empty(), Optional.empty(), Optional.empty()
                                         ))
                                 .build(),
@@ -255,8 +259,7 @@ public class AdamA80Program {
                                 .startKey(Note.of(0)).endKey(Note.of(0))
                                 .unmuted(false)
                                 .build()
-                        ))
-                .build();
+                        ));
     }
 
 }
