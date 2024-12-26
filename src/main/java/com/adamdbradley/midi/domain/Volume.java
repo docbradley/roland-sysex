@@ -6,10 +6,6 @@ package com.adamdbradley.midi.domain;
  */
 public class Volume extends ContinuousControlValue {
 
-    private Volume(final int data) {
-        super(data);
-    }
-
     private static final Volume[] volume;
     static {
         volume = new Volume[128];
@@ -17,6 +13,15 @@ public class Volume extends ContinuousControlValue {
             volume[i] = new Volume(i);
         }
     };
+
+    public static final Volume ZERO = of(0);
+    public static final Volume MID = of(64);
+    public static final Volume NOMINAL = of(100);
+    public static final Volume MAX = of(127);
+
+    private Volume(final int data) {
+        super(data);
+    }
 
     /**
      * 

@@ -6,6 +6,8 @@ package com.adamdbradley.midi.domain;
  */
 public class Pan extends ContinuousControlValue {
 
+    public static final Pan CENTER = of(0);
+
     private Pan(final int data) {
         super(data);
     }
@@ -19,7 +21,7 @@ public class Pan extends ContinuousControlValue {
     };
 
     /**
-     * @param value 0..127
+     * @param value -63..63
      * @return
      */
     public static Pan of(final int value) {

@@ -4,7 +4,7 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
 
 /**
  * Identifier for an A-80 "patch".
- * Translates between nominal (1-64, aka 11-88 oct+1)
+ * Translates between nominal (1-64, aka 11-88 oct-basis-1)
  * and wire (0-63) representations.
  */
 public class PatchNumber extends SingleSevenBitData {

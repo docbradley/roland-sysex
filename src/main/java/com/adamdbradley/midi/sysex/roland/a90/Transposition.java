@@ -11,6 +11,8 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
  */
 public class Transposition extends SingleSevenBitData {
 
+    public static final Transposition ZERO = of(0);
+
     private Transposition(final int data) {
         super(false, "T" + (data - 64), data, 0x0000007F);
     }

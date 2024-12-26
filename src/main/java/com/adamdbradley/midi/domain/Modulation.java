@@ -6,10 +6,6 @@ package com.adamdbradley.midi.domain;
  */
 public class Modulation extends ContinuousControlValue {
 
-    private Modulation(final int data) {
-        super("Mod" + data, data);
-    }
-
     private static final Modulation[] modulationValues;
     static {
         modulationValues = new Modulation[128];
@@ -17,6 +13,12 @@ public class Modulation extends ContinuousControlValue {
             modulationValues[i] = new Modulation(i);
         }
     };
+
+    public static final Modulation ZERO = of(0);
+
+    private Modulation(final int data) {
+        super("Mod" + data, data);
+    }
 
     /**
      * @param value 0..127

@@ -15,23 +15,25 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import com.adamdbradley.midi.domain.BitMask;
 import com.adamdbradley.midi.message.Message;
 import com.adamdbradley.midi.sysex.roland.InstrumentModel;
 import com.adamdbradley.midi.sysex.roland.RolandDataSetCommand;
 import com.adamdbradley.midi.sysex.roland.RolandSysexCommand;
 import com.adamdbradley.midi.sysex.roland.RolandSysexMessage;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 
 /**
  * Represents a single "Performance" for the A-90 controller.
  */
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class PerformanceModel implements com.adamdbradley.midi.sysex.roland.UpdatingModel {
+public class PerformanceModel
+extends A90Foundations
+implements com.adamdbradley.midi.sysex.roland.UpdatingModel {
 
     /**
      * 0 = "temporary", 1..64 = "internal"
@@ -41,19 +43,10 @@ public class PerformanceModel implements com.adamdbradley.midi.sysex.roland.Upda
     @NonNull @Nonnull private final String performanceName; // Max Length: 12 ASCII
     private final Optional<Integer> tempoChange; // 20-250
     private final Optional<Integer> songChange; // 0-127
-    private final boolean remoteSwitchExtA;
-    private final boolean remoteSwitchExtB;
-    private final boolean remoteSwitchExtC;
-    private final boolean remoteSwitchExtD;
-    private final boolean remoteSwitchIntA;
-    private final boolean remoteSwitchIntB;
-    private final boolean remoteSwitchIntC;
-    private final boolean remoteSwitchIntD;
+    private final BitMask remoteSwitchExts;
+    private final BitMask remoteSwitchInts;
     private final boolean in2toInternal;
-    private final boolean in2toOut1;
-    private final boolean in2toOut2;
-    private final boolean in2toOut3;
-    private final boolean in2toOut4;
+    private final BitMask in2toOuts;
     @NonNull @Nonnull private final VERD1FX verd1FX;
     @NonNull @Nonnull private final List<Optional<EffectorSetup>> effectorSetups;
     // ...A whole bunch of per-analog "tempo min/max" stuff...
@@ -91,19 +84,19 @@ public class PerformanceModel implements com.adamdbradley.midi.sysex.roland.Upda
                 baos.write(new byte[3]);
             }
 
-            baos.write((byte) (remoteSwitchExtA ? 1 : 0));
-            baos.write((byte) (remoteSwitchExtB ? 1 : 0));
-            baos.write((byte) (remoteSwitchExtC ? 1 : 0));
-            baos.write((byte) (remoteSwitchExtD ? 1 : 0));
-            baos.write((byte) (remoteSwitchIntA ? 1 : 0));
-            baos.write((byte) (remoteSwitchIntB ? 1 : 0));
-            baos.write((byte) (remoteSwitchIntC ? 1 : 0));
-            baos.write((byte) (remoteSwitchIntD ? 1 : 0));
+            remoteSwitchExts.stream(4)
+            .<Byte>map(on -> (byte) (on ? 1 : 0))
+            .forEachOrdered(b -> baos.write(b.byteValue()));
+
+            remoteSwitchInts.stream(4)
+            .<Byte>map(on -> (byte) (on ? 1 : 0))
+            .forEachOrdered(b -> baos.write(b.byteValue()));
+
             baos.write((byte) (in2toInternal ? 1 : 0));
-            baos.write((byte) (in2toOut1 ? 1 : 0));
-            baos.write((byte) (in2toOut2 ? 1 : 0));
-            baos.write((byte) (in2toOut3 ? 1 : 0));
-            baos.write((byte) (in2toOut4 ? 1 : 0));
+
+            in2toOuts.stream(4)
+            .<Byte>map(on -> (byte) (on ? 1 : 0))
+            .forEachOrdered(b -> baos.write(b.byteValue()));
 
             baos.write(verd1FX.build());
 
@@ -177,18 +170,6 @@ public class PerformanceModel implements com.adamdbradley.midi.sysex.roland.Upda
 
     private static byte[] commentBytes(final String comment) {
         return stringBytes(new byte[34], comment);
-    }
-
-    private static byte[] stringBytes(final byte[] buffer, final String string) {
-        for (int i=0; i<buffer.length; i++) {
-            buffer[i] = 0x20;
-        }
-        final byte[] stringBytes = string.getBytes(Charsets.US_ASCII);
-        if (stringBytes.length > buffer.length) {
-            throw new IllegalStateException("Can't fit [" + string + "] into " + buffer.length);
-        }
-        System.arraycopy(stringBytes, 0, buffer, 0, stringBytes.length);
-        return buffer;
     }
 
 }

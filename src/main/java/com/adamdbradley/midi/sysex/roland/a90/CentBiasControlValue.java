@@ -8,6 +8,8 @@ import com.adamdbradley.midi.domain.SingleSevenBitData;
  */
 public class CentBiasControlValue extends SingleSevenBitData {
 
+    public static final CentBiasControlValue ZERO = of(0);
+
     private CentBiasControlValue(final int data) {
         super(false, "CentBias" + (data - 64), data, 0x0000007F);
     }

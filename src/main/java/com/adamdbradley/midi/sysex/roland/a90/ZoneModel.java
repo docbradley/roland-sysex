@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
+import com.adamdbradley.midi.domain.BitMask;
 import com.adamdbradley.midi.domain.Channel;
 import com.adamdbradley.midi.domain.ContinuousControlValue;
 import com.adamdbradley.midi.domain.Modulation;
@@ -20,21 +21,20 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor
+@SuperBuilder
 @ToString
-public abstract class Zone {
+public abstract class ZoneModel {
 
     private final String comment;
 
     private final boolean zoneSwitch;
     private final boolean localKeyboardSwitch;
-    private final boolean midiOut1;
-    private final boolean midiOut2;
-    private final boolean midiOut3;
-    private final boolean midiOut4;
+    private final BitMask midiOuts;
     @NonNull @Nonnull private final Channel midiChannel;
     @NonNull @Nonnull private final Note keyLower;
     @NonNull @Nonnull private final Note keyUpper;
@@ -49,15 +49,15 @@ public abstract class Zone {
     @NonNull @Nonnull private final Optional<Volume> aux1;
     @NonNull @Nonnull private final Optional<Volume> aux2;
     @NonNull @Nonnull private final Optional<VolumeRange> breathSliderRange;
-    @NonNull @Nonnull private final Optional<VolumeRange> ATSliderRange;
+    @NonNull @Nonnull private final Optional<VolumeRange> aftertouchSliderRange;
     @NonNull @Nonnull private final Optional<VolumeRange> exprSliderRange;
-    @NonNull @Nonnull private final Optional<VolumeRange> PTSliderRange;
-    @NonNull @Nonnull private final Optional<VolumeRange> FC1Range;
-    @NonNull @Nonnull private final Optional<VolumeRange> FC2Range;
-    @NonNull @Nonnull private final Optional<VolumeRange> FS1Values;
-    @NonNull @Nonnull private final Optional<VolumeRange> FS2Values;
+    @NonNull @Nonnull private final Optional<VolumeRange> portamentoTimeSliderRange;
+    @NonNull @Nonnull private final Optional<VolumeRange> footController1Range;
+    @NonNull @Nonnull private final Optional<VolumeRange> footController2Range;
+    @NonNull @Nonnull private final Optional<VolumeRange> footSwitch1Values;
+    @NonNull @Nonnull private final Optional<VolumeRange> footSwitch2Values;
     @NonNull @Nonnull private final Optional<VolumeRange> monoSwitchValues;
-    @NonNull @Nonnull private final Optional<VolumeRange> PTSwitchValues;
+    @NonNull @Nonnull private final Optional<VolumeRange> portamentoSwitchValues;
     @NonNull @Nonnull private final Optional<VolumeRange> aftertouchRange;
     @NonNull @Nonnull private final Optional<VolumeRange> wheel1Range;
     @NonNull @Nonnull private final Optional<VolumeRange> wheel2Range;
@@ -85,10 +85,11 @@ public abstract class Zone {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(buffer.length)) {
             baos.write((byte) (zoneSwitch ? 1 : 0));
             baos.write((byte) (localKeyboardSwitch ? 1 : 0));
-            baos.write((byte) (midiOut1 ? 1 : 0));
-            baos.write((byte) (midiOut2 ? 1 : 0));
-            baos.write((byte) (midiOut3 ? 1 : 0));
-            baos.write((byte) (midiOut4 ? 1 : 0));
+
+            midiOuts.stream(4)
+            .<Byte>map(on -> (byte) (on ? 1 : 0))
+            .forEachOrdered(b -> baos.write(b.byteValue()));
+
             baos.write(midiChannel.getData());
             baos.write(keyLower.getData());
             baos.write(keyUpper.getData());
@@ -107,15 +108,15 @@ public abstract class Zone {
             emitOptional(baos, aux1);
             emitOptional(baos, aux2);
             emitOptionalRange(baos, breathSliderRange);
-            emitOptionalRange(baos, ATSliderRange);
+            emitOptionalRange(baos, aftertouchSliderRange);
             emitOptionalRange(baos, exprSliderRange);
-            emitOptionalRange(baos, PTSliderRange);
-            emitOptionalRange(baos, FC1Range);
-            emitOptionalRange(baos, FC2Range);
-            emitOptionalRange(baos, FS1Values);
-            emitOptionalRange(baos, FS2Values);
+            emitOptionalRange(baos, portamentoTimeSliderRange);
+            emitOptionalRange(baos, footController1Range);
+            emitOptionalRange(baos, footController2Range);
+            emitOptionalRange(baos, footSwitch1Values);
+            emitOptionalRange(baos, footSwitch2Values);
             emitOptionalRange(baos, monoSwitchValues);
-            emitOptionalRange(baos, PTSwitchValues);
+            emitOptionalRange(baos, portamentoSwitchValues);
             emitOptionalRange(baos, aftertouchRange);
             emitOptionalRange(baos, wheel1Range);
             emitOptionalRange(baos, wheel2Range);

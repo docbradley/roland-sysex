@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 
 import com.adamdbradley.midi.domain.ContinuousControlValue;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,6 +14,7 @@ import lombok.ToString;
 @Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor
+@Builder
 @ToString
 public class VelocityCurve {
 
@@ -25,6 +27,7 @@ public class VelocityCurve {
         Unknown4(4),
         Unknown5(5),
         Unknown6(6);
+
         final int data;
         private byte getData() {
             return (byte) data;
@@ -32,7 +35,7 @@ public class VelocityCurve {
     }
 
     @NonNull @Nonnull private final CurveType curve;
-    @NonNull @Nonnull private final ContinuousControlValue sense; // 1-127
+    @NonNull @Nonnull private final ContinuousControlValue sense; // 1-127 -- TODO NonZero type
     @NonNull @Nonnull private final ContinuousControlValue max; // 1-127
 
     public byte[] build() {
