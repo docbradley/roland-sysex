@@ -9,10 +9,10 @@ import java.util.Optional;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
-import javax.sound.midi.spi.MidiFileWriter;
 
 import com.adamdbradley.midi.DeviceFinder;
 import com.adamdbradley.midi.MidiUtils;
@@ -51,8 +51,8 @@ public class AdamA80Program20230329 {
                 public void close() {
                 }
             });
-            final MidiFileWriter w = new com.sun.media.sound.StandardMidiFileWriter();
-            w.write(s, 0, new File("./" + AdamA80Program20230329.class.getSimpleName() + ".mid"));
+            final File target = new File("./" + AdamA80Program20230329.class.getSimpleName() + ".mid");
+            MidiSystem.write(s, 0, target);
         } else {
             final ProgramSender program = buildProgram(Arrays.asList(args).subList(1, args.length));
             try (MidiDevice device = new DeviceFinder().find(

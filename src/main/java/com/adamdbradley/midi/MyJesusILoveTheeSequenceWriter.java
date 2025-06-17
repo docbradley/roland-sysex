@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.stream.Stream;
 
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
-import javax.sound.midi.spi.MidiFileWriter;
 
 import com.adamdbradley.midi.domain.Channel;
 import com.adamdbradley.midi.domain.ContinuousControlValue;
@@ -59,8 +59,7 @@ public class MyJesusILoveTheeSequenceWriter {
                 )
         .forEach(drumTrack::add);
 
-        final MidiFileWriter w = new com.sun.media.sound.StandardMidiFileWriter();
-        w.write(s, 0, new File("./mjilt-percloop-01.mid"));
+        MidiSystem.write(s, 0, new File("./mjilt-percloop-01.mid"));
     }
 
 }

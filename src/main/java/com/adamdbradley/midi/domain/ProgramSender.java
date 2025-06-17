@@ -9,6 +9,7 @@ import com.adamdbradley.midi.Update;
 import com.adamdbradley.midi.sysex.roland.UpdatingModel;
 import com.google.common.collect.ImmutableList;
 
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
  * delivery of the constituent messages.
  */
 @RequiredArgsConstructor
+@Builder
 public class ProgramSender implements Consumer<Receiver>{
 
     private final Collection<? extends UpdatingModel> patchModels;
