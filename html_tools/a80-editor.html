@@ -1,0 +1,619 @@
+<title>A-80 Patch Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Archivo+Narrow:wght@500;600;700&family=VT323&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an A-80-style front panel. Transport strip on top in captioned button groups, 8x8 bank/number keycap matrix at left, editor plates at right; every value sits in a grey LCD window. Deliberately single-theme (dark chassis). */
+:root{
+  color-scheme:dark;
+  --chassis:#1e1f22; --panel:#26272b; --plate:#2a2b2f; --well:#151618; --line:#3f4045;
+  --ink:#e9e5d9; --muted:#a29e92;
+  --cap-hi:#5b5e64; --cap-lo:#3a3c41; --cap-edge:#0e0f11;
+  --red-hi:#c4462c; --red-lo:#8f2c1a;
+  --led-off:#46201a; --led-on:#ff4b33; --led-glow:rgb(255 64 38 / .7); --amber:#f2a531;
+  --lcd:#aab09f; --lcd-cell:#a1a796; --lcd-ink:#14160f; --lcd-shadow:rgb(20 22 15 / .16); --bezel:#08090a;
+  --accent:#ff7a4a; --bad:#ff7363;
+  --zA:#5d8fe0; --zB:#3fb08e; --zC:#a483dd; --zD:#e0627f;
+  --key-w:#e6e2d6; --key-b:#111214; --key-line:#5e6066;
+  --stripe1:#d6452b; --stripe2:#e9922c;
+  --f-display:"Archivo Narrow","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-lcd:"VT323","Lucida Console","Courier New",monospace;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;color:var(--ink);font:15px/1.45 var(--f-body);
+  background:var(--chassis) repeating-linear-gradient(90deg,rgb(255 255 255/.014) 0 1px,transparent 1px 3px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2{margin:0;font:700 .95rem/1.2 var(--f-display);letter-spacing:.14em;text-transform:uppercase;text-wrap:balance}
+h3{margin:0;display:flex;align-items:center;gap:8px;font:600 .7rem/1 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- top strip ---- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);box-shadow:0 1px 0 var(--cap-edge)}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:7px;pointer-events:none;
+  background:linear-gradient(var(--stripe1) 0 3px,transparent 3px 4px,var(--stripe2) 4px 6px,transparent 6px)}
+.top-in{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end;padding-block:10px 12px}
+.brand{display:flex;flex-direction:column;gap:3px;margin-right:auto}
+.brand b{font:700 1.35rem/1 var(--f-display);letter-spacing:.16em;text-transform:uppercase}
+.brand span{font:600 .66rem/1 var(--f-display);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.pgrp{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cap{display:flex;align-items:center;gap:8px;font:600 .64rem/1 var(--f-display);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.cap::before,.cap::after{content:"";height:1px;background:var(--line)}
+.cap::before{width:10px}.cap::after{flex:1}
+.grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.status{font:600 .66rem/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---- LEDs ---- */
+.dot,.btn::before,.chip::before,.tab::before,.cell::before,.li::before{content:"";flex:none;width:12px;height:5px;border-radius:1px;background:var(--led-off);box-shadow:inset 0 1px 1px rgb(0 0 0/.6)}
+.dot{display:inline-block}
+.dot.on,.btn.on::before,.btn.busy::before,.btn:active:not(:disabled)::before,
+.chip[aria-pressed=true]::before,.tab[aria-selected=true]::before,.cell[aria-current=true]::before,.li[aria-current=true]::before
+{background:var(--led-on);box-shadow:0 0 6px 1px var(--led-glow),inset 0 -1px 0 rgb(255 220 200/.5)}
+.dot.err{background:var(--amber);box-shadow:0 0 5px rgb(242 165 49/.6)}
+
+/* ---- keycaps ---- */
+.btn,.chip,.tab,.cell,.li{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--cap-edge);border-radius:2px;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(var(--cap-hi),var(--cap-lo));color:var(--ink);
+  font:600 .76rem/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.14),0 2px 0 var(--cap-edge)}
+.btn{min-height:32px;padding:6px 15px 6px 11px}
+.btn:hover:not(:disabled),.chip:hover,.tab:hover,.cell:hover,.li:hover{background:linear-gradient(#64676d,#404247)}
+.btn:active:not(:disabled),.chip:active,.tab:active,.cell:active,.li:active,.btn.busy{transform:translateY(1px);box-shadow:inset 0 1px 0 rgb(255 255 255/.08),0 1px 0 var(--cap-edge)}
+.btn.primary{background:linear-gradient(var(--red-hi),var(--red-lo));color:#fff}
+.btn.primary:hover:not(:disabled){background:linear-gradient(#d0513a,#9b3320)}
+.btn:disabled{color:var(--muted);cursor:not-allowed;filter:saturate(.35) brightness(.78)}
+.btn.busy{filter:none;color:var(--ink)}
+.btn.small{min-height:26px;padding:4px 10px;font-size:.68rem}
+.btn.small::before{display:none}
+.chip{min-height:28px;padding:5px 12px 5px 9px;font-size:.7rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+
+/* ---- LCD windows ---- */
+input[type=text],input[type=number],select,.lcd,.tr output,.toast,.logbox,.hexbox{
+  font-family:var(--f-lcd);color:var(--lcd-ink);background-color:var(--lcd);
+  border:2px solid var(--bezel);border-radius:2px;text-shadow:2px 2px 0 var(--lcd-shadow);
+  box-shadow:inset 0 2px 4px rgb(0 0 0/.35),0 1px 0 rgb(255 255 255/.06)}
+input[type=text],input[type=number],select{font-size:20px;line-height:1;padding:4px 7px 3px;min-width:0;max-width:100%}
+input[type=number]{width:calc(3ch + 18px);appearance:textfield;-moz-appearance:textfield;text-align:right}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+select{appearance:none;-webkit-appearance:none;padding-right:22px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0h10L5 6z' fill='%2314160f'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;background-size:9px 6px}
+select option{background:var(--lcd);color:var(--lcd-ink)}
+select:disabled{filter:brightness(.7);cursor:not-allowed}
+/* unlit character cells behind fixed-length text fields */
+.name-in,.chn input,input.mono{font-family:var(--f-lcd);
+  background:repeating-linear-gradient(90deg,var(--lcd-cell) 0 calc(1ch - 1px),transparent calc(1ch - 1px) 1ch) content-box,
+             linear-gradient(var(--lcd),var(--lcd)) padding-box}
+.name-in{width:calc(16ch + 18px)}
+.chn input{width:calc(10ch + 18px);text-transform:uppercase}
+input.mono{width:calc(32ch + 18px)}
+.lcd{font-size:2.7rem;line-height:.9;padding:4px 14px 2px;letter-spacing:.04em}
+.tr output{font-size:20px;line-height:1;padding:3px 6px 2px;min-width:calc(3ch + 16px);text-align:right}
+
+/* ---- fader (transpose) ---- */
+input[type=range]{-webkit-appearance:none;appearance:none;height:24px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:var(--bezel);border-radius:1px;box-shadow:inset 0 1px 2px #000}
+input[type=range]::-moz-range-track{height:6px;background:var(--bezel);border-radius:1px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:24px;margin-top:-9px;border:1px solid var(--cap-edge);border-radius:2px;
+  background:linear-gradient(90deg,var(--cap-lo),var(--cap-hi) 42%,var(--ink) 42% 58%,var(--cap-hi) 58%,var(--cap-lo))}
+input[type=range]::-moz-range-thumb{width:12px;height:22px;border:1px solid var(--cap-edge);border-radius:2px;
+  background:linear-gradient(90deg,var(--cap-lo),var(--cap-hi) 42%,var(--ink) 42% 58%,var(--cap-hi) 58%,var(--cap-lo))}
+
+/* ---- layout ---- */
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:18px;padding-block:22px 40px}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.tab{justify-content:center;min-height:32px;padding:6px 8px}
+.bank{display:grid;grid-template-columns:auto repeat(8,minmax(0,1fr));gap:4px 3px}
+.bank .hd{font:600 .66rem/1 var(--f-display);letter-spacing:.08em;color:var(--muted);text-align:center;align-self:center;padding:2px}
+.cell{position:relative;flex-direction:column;align-items:flex-start;gap:4px;padding:5px 4px 6px;min-width:0;text-transform:none;letter-spacing:.02em}
+.cell::before{width:10px;height:4px}
+.cell .n{font:700 .74rem/1 var(--f-display);letter-spacing:.06em}
+.cell .t{display:block;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:500 .6rem/1.1 var(--f-display);color:var(--muted)}
+.cell.dirty::after,.li.dirty::after{content:"";position:absolute;top:5px;right:4px;width:6px;height:4px;border-radius:1px;background:var(--amber);box-shadow:0 0 4px rgb(242 165 49/.6)}
+.legend{display:flex;gap:8px;align-items:center;font:600 .66rem/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.legend i{width:6px;height:4px;border-radius:1px;background:var(--amber);box-shadow:0 0 4px rgb(242 165 49/.6)}
+.list{display:flex;flex-direction:column;gap:5px;max-height:70vh;overflow:auto;padding:2px 2px 4px}
+.li{position:relative;padding:7px 10px;text-transform:none;letter-spacing:.04em;font-size:.82rem}
+.li .n{font-family:var(--f-display);color:var(--muted);min-width:2ch}
+
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--plate);border:1px solid var(--cap-edge);border-radius:3px;padding:14px;min-width:0;box-shadow:inset 0 1px 0 rgb(255 255 255/.05)}
+.head{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center}
+.spacer{flex:1}
+.kbd-scroll{overflow-x:auto;margin-top:10px;background:var(--bezel);border-radius:2px;padding:6px 6px 4px}
+.kbd-scroll svg{display:block;min-width:680px;width:100%;height:auto;touch-action:none;user-select:none}
+.kbd-note{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+
+.zones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1400px){.zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.zones{grid-template-columns:minmax(0,1fr)}}
+.zone{border-top:4px solid var(--zc);display:flex;flex-direction:column;gap:12px}
+.zone.muted{opacity:.6}
+.zt{display:flex;align-items:center;gap:9px}
+.zl{width:26px;height:26px;border-radius:2px;background:var(--zc);color:var(--bezel);display:grid;place-items:center;font:700 1rem/1 var(--f-display)}
+.sec{display:flex;flex-direction:column;gap:7px;padding-top:2px}
+.row{display:grid;grid-template-columns:7.4em minmax(0,1fr);align-items:center;gap:8px}
+.row .lbl{font:600 .7rem/1.15 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.val{display:flex;gap:6px;align-items:center;min-width:0;flex-wrap:wrap}
+.hint{font-size:.78rem;color:var(--muted)}
+.tr{display:flex;gap:8px;align-items:center;min-width:0}
+.tr input[type=range]{flex:1;min-width:0}
+.flag{font:700 .62rem/1.3 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);border-radius:2px;padding:0 4px;white-space:nowrap}
+
+.eff{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.eff{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.eff>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.eff .lbl{font:600 .68rem/1.2 var(--f-display);letter-spacing:.1em;text-transform:uppercase}
+.links{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px 6px}
+@media (max-width:620px){.links{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.links label{display:flex;flex-direction:column;gap:3px;font:600 .64rem/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.links label.off{opacity:.4}
+.links select{width:100%}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px}
+@media (max-width:620px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.chn{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.chn{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.chn label{display:flex;flex-direction:column;gap:3px;font:600 .64rem/1 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:0}
+.note{font-size:.85rem;color:var(--muted);max-width:70ch}
+
+/* segmented LED meter for transfers */
+.prog{display:inline-block;width:124px;height:11px;padding:2px;background:var(--bezel);border-radius:1px}
+.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--led-on) 0 5px,transparent 5px 7px);filter:drop-shadow(0 0 3px var(--led-glow))}
+
+details.log{background:var(--plate);border:1px solid var(--cap-edge);border-radius:3px;padding:10px 14px}
+details.log summary{cursor:pointer;font:600 .74rem/1 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.logbox{font-size:17px;line-height:1.15;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin-top:10px;padding:8px 10px}
+.logbox:empty{display:none}
+.hexbox{width:100%;height:150px;font-size:17px;line-height:1.15;padding:8px 10px}
+.banner{border:1px dashed var(--line);border-radius:2px;padding:10px 14px;font-size:.88rem;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;max-width:calc(100% - 32px);
+  font-size:21px;line-height:1.1;padding:7px 14px 5px;box-shadow:0 0 0 3px var(--plate),0 6px 18px rgb(0 0 0/.55)}
+@media (prefers-reduced-motion:no-preference){.btn::before,.chip::before,.tab::before,.cell::before,.li::before{transition:background .08s,box-shadow .08s}}
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand"><b>A-80 Patch Editor</b><span>MIDI keyboard controller · SysEx model 27H</span></div>
+    <div class="pgrp"><span class="cap">MIDI</span>
+      <div class="grp">
+        <span class="dot" id="mDot"></span>
+        <button class="btn" id="mConnect">Connect MIDI</button>
+        <label class="status" for="mOut">Out</label><select id="mOut" disabled><option>—</option></select>
+        <label class="status" for="mIn">In</label><select id="mIn" disabled><option>—</option></select>
+      </div></div>
+    <div class="pgrp"><span class="cap">Transmit</span>
+      <div class="grp">
+        <button class="btn primary" id="sendCur" disabled>Send patch</button>
+        <button class="btn" id="sendDirty" disabled>Send changed</button>
+        <button class="btn" id="sendAll" disabled>Send all</button>
+        <button class="btn" id="reqDump" disabled>Request dump</button>
+        <span class="prog" hidden id="progWrap"><i id="prog"></i></span>
+        <button class="btn small" id="cancel" hidden>Stop</button>
+      </div></div>
+    <div class="pgrp"><span class="cap">File</span>
+      <div class="grp">
+        <button class="btn" id="importBtn">Import .syx/.mid</button>
+        <input type="file" id="file" accept=".syx,.mid,.midi,.txt" hidden>
+        <button class="btn" id="saveSyx">Save .syx</button>
+        <button class="btn" id="getHtml" hidden>Get editor .html</button>
+        <button class="btn" id="copyHex">Copy hex</button>
+      </div></div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <aside class="side">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tP" aria-selected="true">Patches</button>
+      <button class="tab" role="tab" id="tC" aria-selected="false">Chains</button>
+      <button class="tab" role="tab" id="tS" aria-selected="false">System</button>
+    </div>
+    <div id="nav"></div>
+    <div class="legend"><i></i> edited since last send</div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="wrap" style="padding-block:0 32px">
+  <details class="log" id="logD"><summary>MIDI log</summary>
+    <div id="hexWrap" hidden><p class="note">Hex for every message (one per line). Paste into a SysEx tool, or save with your own utility.</p><textarea class="hexbox" id="hexOut" readonly></textarea></div>
+    <div class="logbox" id="log"></div>
+  </details>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ============ constants ============ */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const noteName=n=>NOTES[n%12]+(Math.floor(n/12)-1);
+const PL=i=>`${(i>>3)+1}${(i&7)+1}`;               // patch label 11..88
+const ZN=['A','B','C','D'];
+const VEL_CURVES=['Flat','Shallow soft','Deep soft','Shallow hard','Deep hard','Sinusoid','Reverse'];
+const AT_CURVES=['Flat','Shallow soft','Deep soft','Shallow hard','Deep hard','Sinusoid'];
+const PC_FMT=['A/B · bank 8 · patch 8','Int/Card · bank 8 · patch 8','Int/Card · bank H · patch 8','A/B · decimal 16','A/B · decimal 32','Int/Card · decimal 64','Decimal 1–128','Decimal 0–99','Hex'];
+const CCN={0:'Bank MSB',1:'Modulation',2:'Breath',4:'Foot',5:'Porta time',6:'Data entry',7:'Volume',8:'Balance',10:'Pan',11:'Expression',12:'Effect 1',13:'Effect 2',16:'GP 1',17:'GP 2',18:'GP 3',19:'GP 4',32:'Bank LSB',64:'Hold',65:'Portamento',66:'Sostenuto',67:'Soft',68:'Legato',69:'Hold 2',71:'Resonance',72:'Release',73:'Attack',74:'Cutoff',84:'Porta ctrl',91:'Reverb',92:'Tremolo',93:'Chorus',94:'Celeste',95:'Phaser'};
+const SPECIAL={123:'Tune request (F6)',124:'Omni off',125:'Omni on',126:'Mono on',127:'Poly on'};
+const CC_OPTS=(()=>{const o=[[0,'— none']];for(let v=1;v<=120;v++){const c=v-1;o.push([v,`CC ${c}${CCN[c]?' · '+CCN[c]:''}`])}for(const v of [123,124,125,126,127])o.push([v,SPECIAL[v]]);return o})();
+
+/* ============ settings ============ */
+const DEFAULT_SETTINGS={bendOnByte:1,atOffByte:3,paceMs:60,chunk:142,devId:0,selectAfter:false};
+let settings={...DEFAULT_SETTINGS};
+
+/* ============ model ============ */
+function newZone(i){return{start:i===0?0:0,end:i===0?127:0,ch:i,tr:36,velCurve:0,velScale:64,velOffset:0,velHold:0,
+  atCurve:0,atScale:64,atHold:0,atType:'poly',pcFmt:6,vol:100,mod:0,bend:true,prog:0,slider:[0,0,0,0],sw:[0,0,0,0],foot:[0,0,0,0]}}
+function newPatch(i){return{name:'INIT '+PL(i),out:0x0F,zmask:0x01,zones:[0,1,2,3].map(newZone),effCh:[16,16,16,16],effPc:[0,0,0,0]}}
+function newChain(i){return{name:'CHAIN '+(i+1),comment:'',length:0,links:Array(32).fill(0)}}
+function newGlobals(){return{chanNames:Array.from({length:16},(_,i)=>('CH '+(i+1))),pcRx:0,activeSensing:1,allNotesOff:1,ownExRx:1}}
+function newState(){
+  const s={globals:newGlobals(),chains:Array.from({length:32},(_,i)=>newChain(i)),patches:Array.from({length:64},(_,i)=>newPatch(i))};
+  // marked example so the first view shows what a split looks like
+  const p=s.patches[0]; p.name='Split (example)'; p.zmask=0x07;
+  Object.assign(p.zones[0],{start:60,end:127,ch:0,prog:0});
+  Object.assign(p.zones[1],{start:0,end:59,ch:1,tr:24,prog:32,slider:[8,12,0,0]});
+  Object.assign(p.zones[2],{start:48,end:72,ch:2,vol:80,prog:48,atType:'channel'});
+  p.zones[0].slider=[8,12,3,6]; p.zones[0].foot=[12,65,0,0];
+  return s;
+}
+let S=newState();
+let dirty=new Set();
+let ui={tab:'P',patch:0,chain:0};
+
+/* ============ encoding ============ */
+const ascii=(str,n)=>{const a=[];for(let i=0;i<n;i++){let c=i<str.length?str.charCodeAt(i):32;if(c<32||c>126)c=63;a.push(c)}return a};
+const unascii=b=>String.fromCharCode(...b.map(c=>(c<32||c>126)?32:c)).replace(/\s+$/,'');
+const c7=v=>Math.max(0,Math.min(127,v|0));
+function encZone(z){
+  const at=z.atType==='poly'?0:z.atType==='channel'?1:settings.atOffByte;
+  const bend=z.bend?settings.bendOnByte:1-settings.bendOnByte;
+  return [z.start,z.end,z.ch,z.tr,z.velCurve,z.velScale,z.velOffset,z.velHold,z.atCurve,z.atScale,z.atHold,at,z.pcFmt,z.vol,z.mod,bend,z.prog,...z.slider,...z.sw,...z.foot].map(c7);
+}
+function encPatch(p){const b=[...ascii(p.name,16),p.out&15,p.zmask&15];for(const z of p.zones)b.push(...encZone(z));b.push(...p.effCh.map(c7),...p.effPc.map(c7));return b}
+function encChain(c){return [...ascii(c.name,16),...ascii(c.comment,32),c7(c.length),...c.links.map(c7)]}
+function encGlobals(g){const b=[];for(const n of g.chanNames)b.push(...ascii(n.toUpperCase(),10));b.push(c7(g.pcRx),g.activeSensing?1:0,g.allNotesOff?1:0,g.ownExRx?1:0);return b}
+let obs=null; // byte observations during decode
+function decZone(b){
+  const at=b[11];const bend=b[15];
+  if(obs){obs.at[at]=(obs.at[at]||0)+1;obs.bend[bend]=(obs.bend[bend]||0)+1}
+  return{start:b[0],end:b[1],ch:b[2]&15,tr:Math.min(72,b[3]),velCurve:b[4],velScale:b[5],velOffset:b[6],velHold:b[7],atCurve:b[8],atScale:b[9],atHold:b[10],
+    atType:at===0?'poly':at===1?'channel':'off',pcFmt:b[12],vol:b[13],mod:b[14],bend:bend===settings.bendOnByte,prog:b[16],
+    slider:b.slice(17,21),sw:b.slice(21,25),foot:b.slice(25,29)}
+}
+function decPatch(b){const zones=[];for(let i=0;i<4;i++)zones.push(decZone(b.slice(18+i*29,47+i*29)));
+  return{name:unascii(b.slice(0,16)),out:b[16]&15,zmask:b[17]&15,zones,effCh:b.slice(134,138),effPc:b.slice(138,142)}}
+function decChain(b){return{name:unascii(b.slice(0,16)),comment:unascii(b.slice(16,48)),length:b[48],links:b.slice(49,81)}}
+function decGlobals(b){const n=[];for(let i=0;i<16;i++)n.push(unascii(b.slice(i*10,i*10+10)));return{chanNames:n,pcRx:b[160],activeSensing:b[161],allNotesOff:b[162],ownExRx:b[163]}}
+
+/* linear address space: aa bb cc -> aa*16384 + bb*128 + cc */
+const REG={g:{base:0,size:164},c:{base:256,stride:256,size:81},p:{base:16384,stride:16384,size:142}};
+const linOf=key=>key==='g'?0:key[0]==='c'?256+(+key.slice(1))*256:16384*(1+(+key.slice(1)));
+function locate(lin){
+  if(lin<164)return['g',lin];
+  if(lin>=256&&lin<256+32*256){const o=(lin-256)&255;if(o<81)return['c'+((lin-256)>>8),o]}
+  if(lin>=16384){const p=(lin>>14)-1,o=lin&16383;if(p<64&&o<142)return['p'+p,o]}
+  return null;
+}
+function encKey(k){return k==='g'?encGlobals(S.globals):k[0]==='c'?encChain(S.chains[+k.slice(1)]):encPatch(S.patches[+k.slice(1)])}
+function setFromBytes(k,b){if(k==='g')S.globals=decGlobals(b);else if(k[0]==='c')S.chains[+k.slice(1)]=decChain(b);else S.patches[+k.slice(1)]=decPatch(b)}
+const ALL_KEYS=['g',...Array.from({length:32},(_,i)=>'c'+i),...Array.from({length:64},(_,i)=>'p'+i)];
+
+/* ============ SysEx framing ============ */
+const addr3=lin=>[(lin>>14)&127,(lin>>7)&127,lin&127];
+const csum=a=>(128-(a.reduce((s,x)=>s+x,0)&127))&127;
+function dt1(lin,data){const body=[...addr3(lin),...data];return[0xF0,0x41,settings.devId,0x27,0x12,...body,csum(body),0xF7]}
+function msgsFor(k){const d=encKey(k),lin=linOf(k),n=Math.max(1,settings.chunk|0),out=[];for(let i=0;i<d.length;i+=n)out.push(dt1(lin+i,d.slice(i,i+n)));return out}
+const rq1All=()=>{const body=[0,0,0,0,0,0];return[0xF0,0x41,settings.devId,0x27,0x11,...body,csum(body),0xF7]};
+const selectMsg=p=>dt1(0x41*16384,[p]);
+const hex=m=>m.map(x=>x.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+
+function splitSysex(bytes){const out=[];let cur=null;for(const x of bytes){if(x===0xF0)cur=[0xF0];else if(cur){cur.push(x);if(x===0xF7){out.push(cur);cur=null}}}return out}
+function readVar(d,i){let v=0,b;do{b=d[i++];v=(v<<7)|(b&127)}while(b&128);return[v,i]}
+function parseMid(d){
+  const out=[];let i=0;const s4=i=>String.fromCharCode(d[i],d[i+1],d[i+2],d[i+3]);const u32=i=>(d[i]<<24|d[i+1]<<16|d[i+2]<<8|d[i+3])>>>0;
+  if(s4(0)!=='MThd')throw new Error('Not a Standard MIDI File');
+  i=8+u32(4);
+  while(i+8<=d.length){const id=s4(i),len=u32(i+4);let p=i+8;const end=p+len;
+    if(id==='MTrk'){let rs=0;while(p<end){[,p]=readVar(d,p);let st=d[p];
+      if(st===0xF0||st===0xF7){p++;let l;[l,p]=readVar(d,p);const body=Array.from(d.slice(p,p+l));p+=l;
+        if(st===0xF0){const m=[0xF0,...body];if(m[m.length-1]!==0xF7)m.push(0xF7);out.push(m)}}
+      else if(st===0xFF){p+=2;let l;[l,p]=readVar(d,p);p+=l}
+      else{if(st&0x80){rs=st;p++}const hi=rs&0xF0;p+=(hi===0xC0||hi===0xD0)?1:2}}}
+    i=end}
+  return out;
+}
+/* apply a batch of incoming DT1 messages to the model */
+function applyMessages(msgs,source){
+  const img={},touched=new Set();let ok=0,bad=0,foreign=0,skipped=0;
+  obs={at:{},bend:{}};
+  for(const m of msgs){
+    if(m[1]!==0x41||m[3]!==0x27||m[4]!==0x12){foreign++;continue}
+    const body=m.slice(5,m.length-2);if(csum(body)!==m[m.length-2]){bad++;continue}
+    const lin=body[0]*16384+body[1]*128+body[2];const data=body.slice(3);ok++;
+    for(let i=0;i<data.length;i++){const loc=locate(lin+i);if(!loc){skipped++;continue}
+      const[k,o]=loc;if(!img[k])img[k]=encKey(k);img[k][o]=data[i];touched.add(k)}
+  }
+  for(const k of touched)setFromBytes(k,img[k]);
+  const o=obs;obs=null;
+  return{ok,bad,foreign,skipped,touched,obs:o};
+}
+function summarize(r,src){
+  const np=[...r.touched].filter(k=>k[0]==='p').length,nc=[...r.touched].filter(k=>k[0]==='c').length,g=r.touched.has('g');
+  let s=`${src}: ${r.ok} DT1 message(s) → ${np} patch(es), ${nc} chain(s)${g?', system':''}.`;
+  if(r.bad)s+=` ${r.bad} failed checksum.`;if(r.foreign)s+=` ${r.foreign} non-A-80 message(s) ignored.`;if(r.skipped)s+=` ${r.skipped} byte(s) outside the known map.`;
+  const f=o=>Object.entries(o).map(([k,v])=>`${k}:${v}`).join(', ')||'—';
+  if(np)s+=`\n  Byte 0Fh (pitch bend) values seen per zone: {${f(r.obs.bend)}}   Byte 0Bh (aftertouch type): {${f(r.obs.at)}}`;
+  return s;
+}
+
+/* ============ persistence ============ */
+const LS='a80-editor-v1';
+function persist(){try{localStorage.setItem(LS,JSON.stringify({S,settings,dirty:[...dirty],ui}))}catch(e){}}
+function restore(){try{const j=JSON.parse(localStorage.getItem(LS)||'null');if(j&&j.S&&j.S.patches&&j.S.patches.length===64){S=j.S;settings={...DEFAULT_SETTINGS,...j.settings};dirty=new Set(j.dirty||[]);ui={...ui,...j.ui}}}catch(e){}}
+
+/* ============ DOM helpers ============ */
+const $=id=>document.getElementById(id);
+function h(tag,attrs={},...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v===true)e.setAttribute(k,'');else if(v!==false&&v!=null)e.setAttribute(k,v)}for(const k of kids.flat())if(k!=null)e.append(k.nodeType?k:document.createTextNode(k));return e}
+let uid=0;const nid=()=>'f'+(++uid);
+function edited(k){if(k!=null)dirty.add(k);persist();if(k!=null)refreshChrome()}
+function num(get,set,min,max,k,extra){const id=nid();const i=h('input',{type:'number',id,min,max,value:get()});
+  const after=extra?extra(get()):null;
+  i.addEventListener('change',()=>{let v=Math.round(+i.value);if(isNaN(v))v=get();v=Math.max(min,Math.min(max,v));i.value=v;set(v);if(after)after.textContent=extra(v).textContent;edited(k)});
+  return after?h('span',{class:'val'},i,after):i}
+function sel(opts,get,set,k){const id=nid();const s=h('select',{id});let found=false;for(const[v,l]of opts){const o=h('option',{value:v},l);if(+v===get()){o.selected=true;found=true}s.append(o)}
+  if(!found){const o=h('option',{value:get()},`raw ${get()}`);o.selected=true;s.append(o)}
+  s.addEventListener('change',()=>{set(+s.value);edited(k)});return s}
+function toggle(get,set,on,off,k,cb){const b=h('button',{class:'chip','aria-pressed':String(!!get())},get()?on:off);
+  b.addEventListener('click',()=>{const v=!get();set(v);b.setAttribute('aria-pressed',String(v));b.textContent=v?on:off;edited(k);cb&&cb(v)});return b}
+const row=(label,ctrl)=>h('div',{class:'row'},h('span',{class:'lbl'},label),h('div',{class:'val'},ctrl));
+const noteTag=v=>h('span',{class:'hint mono'},noteName(v));
+function txt(get,set,max,k,cls,upper){const i=h('input',{type:'text',id:nid(),maxlength:max,value:get(),class:cls||'',spellcheck:'false'});
+  i.addEventListener('input',()=>{let v=i.value.replace(/[^\x20-\x7e]/g,'');if(upper)v=v.toUpperCase();if(v!==i.value)i.value=v;set(v);edited(k);if(k[0]==='c')refreshNav()});return i}
+
+/* ============ keyboard map ============ */
+const KX={};(()=>{const W=1000/52,BW=W*.6;let x=0;for(let n=21;n<=108;n++){if([0,2,4,5,7,9,11].includes(n%12)){KX[n]={x0:x,x1:x+W,w:true};x+=W}else KX[n]={x0:x-BW/2,x1:x+BW/2,w:false}}})();
+const KH=74,LANE=22,LT=KH+10;
+function nearestNote(x){let best=21,bd=1e9;for(let n=21;n<=108;n++){const c=(KX[n].x0+KX[n].x1)/2,d=Math.abs(c-x);if(d<bd){bd=d;best=n}}
+  if(x<-6)return Math.max(0,21-Math.round((-x)/10));if(x>1006)return Math.min(127,108+Math.round((x-1000)/10));return best}
+function drawKbd(svg){
+  const p=S.patches[ui.patch];const NS='http://www.w3.org/2000/svg';const H=LT+4*LANE+6;
+  svg.setAttribute('viewBox',`-30 0 1060 ${H}`);svg.innerHTML='';
+  const el=(t,a,txt)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.append(e);return e};
+  for(let n=21;n<=108;n++)if(KX[n].w)el('rect',{x:KX[n].x0,y:0,width:KX[n].x1-KX[n].x0,height:KH,fill:'var(--key-w)',stroke:'var(--key-line)','stroke-width':.6});
+  for(let n=21;n<=108;n++)if(!KX[n].w)el('rect',{x:KX[n].x0,y:0,width:KX[n].x1-KX[n].x0,height:KH*.62,fill:'var(--key-b)'});
+  for(let n=24;n<=108;n+=12)el('text',{x:KX[n].x0+2,y:KH-5,'font-size':8,fill:'var(--muted)','font-family':'IBM Plex Mono, monospace'},'C'+(n/12-1));
+  p.zones.forEach((z,i)=>{
+    const y=LT+i*LANE,col=`var(--z${ZN[i]})`,on=(p.zmask>>i)&1;
+    el('text',{x:-24,y:y+14,'font-size':11,'font-weight':700,fill:col,'font-family':'Archivo Narrow, Arial Narrow, sans-serif'},ZN[i]);
+    el('rect',{x:0,y:y+2,width:1000,height:LANE-6,fill:'var(--well)',rx:3});
+    if(z.start>z.end){el('text',{x:8,y:y+14,'font-size':10,fill:'var(--bad)'},'Low key is above high key — zone plays nothing');return}
+    const s=Math.max(21,z.start),e=Math.min(108,z.end);
+    let x0,x1;if(z.end<21){x0=-14;x1=-4}else if(z.start>108){x0=1004;x1=1014}else{x0=KX[s].x0;x1=KX[e].x1}
+    if(z.start<21&&z.end>=21)x0=-14; if(z.end>108&&z.start<=108)x1=1014;
+    el('rect',{x:x0,y:y+2,width:Math.max(4,x1-x0),height:LANE-6,rx:3,fill:col,'fill-opacity':on?.85:.25,stroke:col,'stroke-dasharray':on?'':'3 2'});
+    const trs=z.tr-36;const lab=`${noteName(z.start)}–${noteName(z.end)} · ch ${z.ch+1}${trs?` · ${trs>0?'+':''}${trs}`:''}${on?'':' · muted'}`;
+    const t=el('text',{x:x0+6,y:y+14,'font-size':10,fill:on?'#fff':'var(--muted)','font-family':'IBM Plex Mono, monospace'},lab);
+    if(x1-x0<lab.length*6.2+10){t.setAttribute('x',Math.min(x1+4,1000-lab.length*6.2));t.setAttribute('fill','var(--muted)')}
+    for(const[edge,xx]of[['start',x0],['end',x1]]){
+      const hd=el('rect',{x:xx-4,y:y,width:8,height:LANE-2,rx:2,fill:'var(--ink)','fill-opacity':.55,style:'cursor:ew-resize'});
+      hd.addEventListener('pointerdown',ev=>startDrag(ev,svg,i,edge));
+    }
+  });
+}
+function startDrag(ev,svg,zi,edge){
+  ev.preventDefault();const tgt=ev.target;tgt.setPointerCapture(ev.pointerId);
+  const z=S.patches[ui.patch].zones[zi];
+  const move=e=>{const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const x=pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+    let n=nearestNote(x);if(edge==='start')z.start=Math.min(n,z.end);else z.end=Math.max(n,z.start);drawKbd(svg);syncZoneInputs(zi)};
+  const up=()=>{tgt.removeEventListener('pointermove',move);tgt.removeEventListener('pointerup',up);tgt.removeEventListener('pointercancel',up);edited('p'+ui.patch)};
+  tgt.addEventListener('pointermove',move);tgt.addEventListener('pointerup',up);tgt.addEventListener('pointercancel',up);
+}
+const zoneInputs={};
+function syncZoneInputs(i){const r=zoneInputs[i];if(!r)return;const z=S.patches[ui.patch].zones[i];r.s.value=z.start;r.e.value=z.end;r.sn.textContent=noteName(z.start);r.en.textContent=noteName(z.end)}
+
+/* ============ views ============ */
+const CH_OPTS=Array.from({length:16},(_,i)=>[i,'Ch '+(i+1)]);
+const PROG_OPTS=null;
+function patchView(){
+  const pi=ui.patch,p=S.patches[pi],K='p'+pi;const m=$('main');m.innerHTML='';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('role','img');svg.setAttribute('aria-label','Zone key ranges on the 88-key keyboard');
+  const outs=h('div',{class:'chips'},h('span',{class:'hint'},'MIDI out'),...[0,1,2,3].map(b=>toggle(()=>(p.out>>b)&1,v=>{p.out=v?p.out|(1<<b):p.out&~(1<<b)},'OUT '+(b+1),'OUT '+(b+1),K)));
+  m.append(h('section',{class:'card head'},
+    h('span',{class:'lcd',title:'Patch number as shown on the A-80'},PL(pi)),
+    h('label',{class:'hint',for:'pname'},'Name'),
+    (()=>{const t=txt(()=>p.name,v=>p.name=v,16,K,'name-in');t.id='pname';return t})(),
+    outs,h('span',{class:'spacer'}),
+    h('button',{class:'btn small',onclick:()=>{clip={type:'patch',data:JSON.parse(JSON.stringify(p))};toast(`Copied patch ${PL(pi)}`)}},'Copy'),
+    h('button',{class:'btn small',onclick:()=>{if(!clip||clip.type!=='patch')return toast('Copy a patch first');S.patches[pi]=JSON.parse(JSON.stringify(clip.data));edited(K);patchView();toast(`Pasted into ${PL(pi)}`)}},'Paste'),
+    h('button',{class:'btn small',onclick:()=>{S.patches[pi]=newPatch(pi);edited(K);patchView()}},'Initialize')
+  ));
+  const kc=h('section',{class:'card'},h('h3',{},'Key ranges'),h('div',{class:'kbd-scroll'},svg),
+    h('p',{class:'kbd-note'},'Drag the handles to set low and high keys. Ranges run 0–127; arrows at the edges mean the zone extends past the 88 keys. Note names use C4 = 60.'));
+  m.append(kc);drawKbd(svg);
+  const zg=h('div',{class:'zones'});
+  p.zones.forEach((z,i)=>{
+    const on=()=>(p.zmask>>i)&1;
+    const card=h('section',{class:'card zone'+(on()?'':' muted'),style:`--zc:var(--z${ZN[i]})`});
+    const sIn=h('input',{type:'number',min:0,max:127,value:z.start,id:nid()}),eIn=h('input',{type:'number',min:0,max:127,value:z.end,id:nid()});
+    const sn=noteTag(z.start),en=noteTag(z.end);zoneInputs[i]={s:sIn,e:eIn,sn,en};
+    const keyIn=(inp,f,tag)=>{inp.addEventListener('change',()=>{let v=Math.max(0,Math.min(127,Math.round(+inp.value)||0));inp.value=v;z[f]=v;tag.textContent=noteName(v);drawKbd(svg);edited(K)});return h('span',{class:'val'},inp,tag)};
+    const trOut=h('output',{},fmtTr(z.tr));const tr=h('input',{type:'range',min:0,max:72,value:z.tr,id:nid(),'aria-label':'Transpose'});
+    tr.addEventListener('input',()=>{z.tr=+tr.value;trOut.textContent=fmtTr(z.tr);drawKbd(svg);edited(K)});
+    const cc=(arr,label)=>arr.map((_,j)=>row(`${label} ${j+1}`,sel(CC_OPTS,()=>arr[j],v=>arr[j]=v,K)));
+    card.append(
+      h('div',{class:'zt'},h('span',{class:'zl'},ZN[i]),h('h2',{},'Zone '+ZN[i]),h('span',{class:'spacer'}),
+        toggle(on,v=>{p.zmask=v?p.zmask|(1<<i):p.zmask&~(1<<i)},'On','Muted',K,v=>{card.classList.toggle('muted',!v);drawKbd(svg)})),
+      h('div',{class:'sec'},h('h3',{},'Keys & channel'),
+        row('Low key',keyIn(sIn,'start',sn)),row('High key',keyIn(eIn,'end',en)),
+        row('Channel',sel(CH_OPTS,()=>z.ch,v=>{z.ch=v;drawKbd(svg)},K)),
+        row('Transpose',h('div',{class:'tr'},tr,trOut))),
+      h('div',{class:'sec'},h('h3',{},'On patch select'),
+        row('Program',num(()=>z.prog+1,v=>z.prog=v-1,1,128,K)),
+        row('Volume',num(()=>z.vol,v=>z.vol=v,0,127,K)),
+        row('Modulation',num(()=>z.mod,v=>z.mod=v,0,127,K)),
+        row('Pitch bend',h('span',{class:'val'},toggle(()=>z.bend,v=>z.bend=v,'Enabled','Disabled',K))),
+        row('Display as',sel(PC_FMT.map((l,v)=>[v,l]),()=>z.pcFmt,v=>z.pcFmt=v,K))),
+      h('div',{class:'sec'},h('h3',{},'Velocity'),
+        row('Curve',sel(VEL_CURVES.map((l,v)=>[v,l]),()=>z.velCurve,v=>z.velCurve=v,K)),
+        row('Scaling',num(()=>z.velScale,v=>z.velScale=v,0,127,K)),
+        row('Offset',num(()=>z.velOffset,v=>z.velOffset=v,0,127,K)),
+        row('Holdoff',num(()=>z.velHold,v=>z.velHold=v,0,127,K))),
+      h('div',{class:'sec'},h('h3',{},'Aftertouch'),
+        row('Type',sel([[0,'Poly'],[1,'Channel'],[2,'Off']],()=>({poly:0,channel:1,off:2})[z.atType],v=>z.atType=['poly','channel','off'][v],K)),
+        row('Curve',sel(AT_CURVES.map((l,v)=>[v,l]),()=>z.atCurve,v=>z.atCurve=v,K)),
+        row('Scaling',num(()=>z.atScale,v=>z.atScale=v,0,127,K)),
+        row('Holdoff',num(()=>z.atHold,v=>z.atHold=v,0,127,K))),
+      h('div',{class:'sec'},h('h3',{},'Controllers'),...cc(z.slider,'Slider'),...cc(z.sw,'Switch'),...cc(z.foot,'Foot'))
+    );
+    zg.append(card);
+  });
+  m.append(zg);
+  const eff=h('div',{class:'eff'});
+  for(let j=0;j<4;j++)eff.append(h('div',{},h('span',{class:'lbl hint'},'Extra program change '+(j+1)),
+    sel([[16,'— none'],...CH_OPTS],()=>p.effCh[j]>15?16:p.effCh[j],v=>p.effCh[j]=v,K),
+    h('span',{class:'val'},h('span',{class:'hint'},'Program'),num(()=>p.effPc[j]+1,v=>p.effPc[j]=v-1,1,128,K))));
+  m.append(h('section',{class:'card'},h('h3',{},'Effector program changes'),
+    h('p',{class:'note'},'Sent on these channels whenever patch '+PL(pi)+' is selected, alongside each zone\'s own program change.'),eff));
+}
+const fmtTr=t=>{const v=t-36;return(v>0?'+':'')+v};
+
+function chainView(){
+  const ci=ui.chain,c=S.chains[ci],K='c'+ci;const m=$('main');m.innerHTML='';
+  const POPTS=S.patches.map((p,i)=>[i,`${PL(i)} ${p.name}`]);
+  const links=h('div',{class:'links'});
+  const paint=()=>[...links.children].forEach((l,j)=>l.classList.toggle('off',j>c.length));
+  c.links.forEach((_,j)=>links.append(h('label',{},'Step '+(j+1),sel(POPTS,()=>c.links[j],v=>c.links[j]=v,K))));
+  m.append(h('section',{class:'card head'},h('span',{class:'lcd'},String(ci+1).padStart(2,'0')),
+    h('label',{class:'hint'},'Name'),txt(()=>c.name,v=>c.name=v,16,K,'name-in')));
+  m.append(h('section',{class:'card'},h('div',{class:'cols2'},
+      row('Comment',txt(()=>c.comment,v=>c.comment=v,32,K,'mono')),
+      row('Last step',h('span',{class:'val'},num(()=>c.length+1,v=>{c.length=v-1;paint()},1,32,K),h('span',{class:'flag',title:'Stored as 0–31; whether it means "last step" or "step count" is unconfirmed'},'unverified')))),
+    h('h3',{style:'margin-top:14px'},'Steps'),links));
+  paint();
+}
+
+function systemView(){
+  const g=S.globals,K='g';const m=$('main');m.innerHTML='';
+  const names=h('div',{class:'chn'});
+  g.chanNames.forEach((_,i)=>names.append(h('label',{},'Ch '+(i+1),txt(()=>g.chanNames[i],v=>g.chanNames[i]=v,10,K,'',true))));
+  m.append(h('section',{class:'card'},h('h2',{},'Channel names'),h('p',{class:'note'},'Shown on the A-80 display. Uppercase ASCII, 10 characters.'),names));
+  m.append(h('section',{class:'card'},h('h2',{},'MIDI receive'),h('div',{class:'cols2',style:'margin-top:8px'},
+    row('Program change Rx (IN 1)',sel([...CH_OPTS,[16,'Off']],()=>g.pcRx>15?16:g.pcRx,v=>g.pcRx=v,K)),
+    row('Active sensing',h('span',{class:'val'},toggle(()=>g.activeSensing,v=>g.activeSensing=v?1:0,'On','Off',K))),
+    row('All notes off',h('span',{class:'val'},toggle(()=>g.allNotesOff,v=>g.allNotesOff=v?1:0,'Generate','Don\'t generate',K))),
+    row('Own exclusive Rx',h('span',{class:'val'},toggle(()=>g.ownExRx,v=>g.ownExRx=v?1:0,'On','Off',K)))),
+    h('p',{class:'note'},'If Own exclusive Rx is off on the A-80 itself, nothing this editor sends will land. Turn it on from the front panel first.')));
+  const sset=(k,v)=>{settings[k]=v;persist()};
+  m.append(h('section',{class:'card'},h('h2',{},'Encoding & transport'),
+    h('p',{class:'note'},'Two bytes disagree between the owner\'s manual and the Java builder. Pick the reading that matches your unit; a bulk dump import reports which byte values the A-80 actually stores.'),
+    h('div',{class:'cols2',style:'margin-top:8px'},
+      row(h('span',{},'Pitch bend "on" byte ',h('span',{class:'flag'},'unverified')),sel([[1,'1 = on (Java builder)'],[0,'0 = on (manual table)']],()=>settings.bendOnByte,v=>sset('bendOnByte',v))),
+      row(h('span',{},'Aftertouch "off" byte ',h('span',{class:'flag'},'unverified')),sel([[3,'3 (manual table)'],[2,'2 (Java builder)']],()=>settings.atOffByte,v=>sset('atOffByte',v))),
+      row('Pause between messages',h('span',{class:'val'},num(()=>settings.paceMs,v=>sset('paceMs',v),10,1000,null),h('span',{class:'hint'},'ms · Java builder uses 40'))),
+      row('Max data per message',h('span',{class:'val'},num(()=>settings.chunk,v=>sset('chunk',v),16,256,null),h('span',{class:'hint'},'bytes · 142 sends a patch whole'))),
+      row('Device ID',num(()=>settings.devId,v=>sset('devId',v),0,31,null)),
+      row('After sending one patch',h('span',{class:'val'},toggle(()=>settings.selectAfter,v=>sset('selectAfter',v),'Select it on the A-80','Leave selection',null),h('span',{class:'flag',title:'Writes the patch number to 41 00 00'},'unverified')))),
+    h('div',{class:'grp',style:'margin-top:12px'},h('button',{class:'btn small',onclick:()=>{if(confirmReset.armed){S=newState();dirty=new Set(ALL_KEYS);persist();renderAll();toast('Library reset to defaults');confirmReset.armed=false}else{confirmReset.armed=true;toast('Click again to reset the whole library');setTimeout(()=>confirmReset.armed=false,4000)}}},'Reset whole library'))));
+}
+const confirmReset={armed:false};
+
+function refreshNav(){
+  const nav=$('nav');nav.innerHTML='';
+  if(ui.tab==='P'){
+    const b=h('div',{class:'bank'},h('span'),...[1,2,3,4,5,6,7,8].map(n=>h('span',{class:'hd'},n)));
+    for(let bank=0;bank<8;bank++){b.append(h('span',{class:'hd'},bank+1));
+      for(let n=0;n<8;n++){const i=bank*8+n,p=S.patches[i];
+        b.append(h('button',{class:'cell'+(dirty.has('p'+i)?' dirty':''),'aria-current':String(ui.patch===i),title:`${PL(i)} ${p.name}`,
+          onclick:()=>{ui.patch=i;persist();refreshNav();patchView();refreshChrome()}},h('span',{class:'n'},PL(i)),h('span',{class:'t'},p.name)))}}
+    nav.append(b);
+  }else if(ui.tab==='C'){
+    nav.append(h('div',{class:'list'},...S.chains.map((c,i)=>h('button',{class:'li'+(dirty.has('c'+i)?' dirty':''),'aria-current':String(ui.chain===i),
+      onclick:()=>{ui.chain=i;persist();refreshNav();chainView()}},h('span',{class:'n'},String(i+1).padStart(2,'0')),h('span',{},c.name)))));
+  }else{
+    nav.append(h('div',{class:'banner'},'System settings and how this editor encodes and paces SysEx.'));
+  }
+}
+function renderAll(){
+  for(const[t,id]of[['P','tP'],['C','tC'],['S','tS']])$(id).setAttribute('aria-selected',String(ui.tab===t));
+  refreshNav();(ui.tab==='P'?patchView:ui.tab==='C'?chainView:systemView)();refreshChrome();
+}
+for(const[t,id]of[['P','tP'],['C','tC'],['S','tS']])$(id).addEventListener('click',()=>{ui.tab=t;persist();renderAll()});
+let clip=null;
+
+/* ============ chrome / status ============ */
+function refreshChrome(){
+  const ready=!!out()&&!sending;
+  $('sendCur').disabled=!ready;$('sendAll').disabled=!ready;$('sendDirty').disabled=!ready||!dirty.size;$('reqDump').disabled=!ready||!inp();
+  $('sendCur').textContent=ui.tab==='C'?`Send chain ${ui.chain+1}`:ui.tab==='S'?'Send system':`Send patch ${PL(ui.patch)}`;
+  $('sendDirty').textContent=`Send changed (${dirty.size})`;
+  if(ui.tab==='P')document.querySelectorAll('.cell').forEach((c,i)=>{const n=c.querySelector('.t');if(n)n.textContent=S.patches[i].name;c.classList.toggle('dirty',dirty.has('p'+i))});
+}
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
+function log(line){const l=$('log');const ts=new Date().toLocaleTimeString();l.textContent=`${ts}  ${line}\n`+l.textContent.slice(0,40000)}
+
+/* ============ Web MIDI ============ */
+let midi=null,sending=false,cancelFlag=false,inbuf=[],inTimer=null;
+const out=()=>midi&&$('mOut').value?midi.outputs.get($('mOut').value):null;
+const inp=()=>midi&&$('mIn').value?midi.inputs.get($('mIn').value):null;
+function fillPorts(){
+  for(const[sid,map,key]of[['mOut',midi.outputs,'out'],['mIn',midi.inputs,'in']]){const s=$(sid);const prev=s.value||savedPorts()[key];s.innerHTML='';s.append(h('option',{value:''},'—'));
+    for(const p of map.values())s.append(h('option',{value:p.id},p.name));
+    const match=[...s.options].find(o=>o.value===prev)||[...s.options].find(o=>/a-?80|roland|um-|midisport|usb/i.test(o.textContent));if(match)s.value=match.value;s.disabled=false}
+  attachIn();refreshChrome();
+}
+const savedPorts=()=>{try{return JSON.parse(localStorage.getItem(LS+'-ports')||'{}')}catch(e){return{}}};
+function savePorts(){try{localStorage.setItem(LS+'-ports',JSON.stringify({out:$('mOut').value,in:$('mIn').value}))}catch(e){}}
+function attachIn(){if(!midi)return;for(const p of midi.inputs.values())p.onmidimessage=null;const i=inp();if(i)i.onmidimessage=onMidi}
+function onMidi(e){const d=Array.from(e.data);if(d[0]!==0xF0)return;inbuf.push(d);clearTimeout(inTimer);inTimer=setTimeout(flushIn,400)}
+function flushIn(){const msgs=inbuf;inbuf=[];const r=applyMessages(msgs,'device');for(const k of r.touched)dirty.delete(k);persist();renderAll();const s=summarize(r,'Received from A-80');log(s);toast(s.split('\n')[0])}
+$('mConnect').addEventListener('click',async()=>{
+  if(!navigator.requestMIDIAccess){$('mDot').className='dot err';toast('This browser has no Web MIDI. Use Chrome or Edge.');log('Web MIDI unavailable in this browser (Safari lacks it; Firefox needs a site permission).');return}
+  try{midi=await navigator.requestMIDIAccess({sysex:true});$('mDot').className='dot on';$('mConnect').textContent='MIDI on';$('mConnect').classList.add('on');midi.onstatechange=()=>fillPorts();fillPorts();log('MIDI access granted with SysEx.')}
+  catch(err){$('mDot').className='dot err';log('MIDI access refused: '+(err&&err.message||err)+'. If this page is embedded, open the saved .html file directly in Chrome or Edge.');toast('MIDI access refused. Open the page as a local file in Chrome or Edge.')}
+});
+$('mOut').addEventListener('change',()=>{savePorts();refreshChrome()});$('mIn').addEventListener('change',()=>{savePorts();attachIn();refreshChrome()});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function sendKeys(keys,label,extra=[]){
+  const o=out();if(!o)return;const list=[];for(const k of keys)for(const m of msgsFor(k))list.push([k,m]);for(const m of extra)list.push([null,m]);
+  const btn=document.activeElement&&document.activeElement.classList.contains('btn')?document.activeElement:null;btn&&btn.classList.add('busy');sending=true;cancelFlag=false;refreshChrome();$('progWrap').hidden=false;$('cancel').hidden=false;let n=0;
+  try{for(const[k,m]of list){if(cancelFlag)break;o.send(m);log('→ '+hex(m));n++;$('prog').style.width=(100*n/list.length)+'%';
+      if(k&&list.findLast(x=>x[0]===k)[1]===m)dirty.delete(k);await sleep(settings.paceMs)}}
+  catch(err){log('Send failed: '+err.message);toast('Send failed: '+err.message)}
+  btn&&btn.classList.remove('busy');sending=false;$('progWrap').hidden=true;$('cancel').hidden=true;persist();refreshNav();refreshChrome();
+  toast(cancelFlag?`Stopped after ${n} of ${list.length} messages`:`Sent ${label} (${list.length} message${list.length>1?'s':''})`);
+}
+$('cancel').addEventListener('click',()=>cancelFlag=true);
+$('sendCur').addEventListener('click',()=>{if(ui.tab==='P')sendKeys(['p'+ui.patch],'patch '+PL(ui.patch),settings.selectAfter?[selectMsg(ui.patch)]:[]);else if(ui.tab==='C')sendKeys(['c'+ui.chain],'chain '+(ui.chain+1));else sendKeys(['g'],'system')});
+$('sendDirty').addEventListener('click',()=>sendKeys(ALL_KEYS.filter(k=>dirty.has(k)),'changes'));
+$('sendAll').addEventListener('click',()=>sendKeys(ALL_KEYS,'everything'));
+$('reqDump').addEventListener('click',()=>{const o=out();if(!o)return;const m=rq1All();o.send(m);log('→ '+hex(m)+'   (bulk dump request)');{const b=$('reqDump');b.classList.add('busy');setTimeout(()=>b.classList.remove('busy'),900)}toast('Dump requested. Incoming data loads automatically.')});
+
+/* ============ files ============ */
+$('importBtn').addEventListener('click',()=>$('file').click());
+$('file').addEventListener('change',async()=>{const f=$('file').files[0];if(!f)return;
+  try{const d=new Uint8Array(await f.arrayBuffer());let msgs;if(d[0]===0x4D&&d[1]===0x54)msgs=parseMid(d);else if(d.includes(0xF0))msgs=splitSysex(d);else{const t=new TextDecoder().decode(d).match(/[0-9a-fA-F]{2}/g)||[];msgs=splitSysex(t.map(x=>parseInt(x,16)))}
+    const r=applyMessages(msgs,f.name);for(const k of r.touched)dirty.add(k);persist();renderAll();const s=summarize(r,f.name);log(s);toast(s.split('\n')[0])}
+  catch(err){toast('Could not read '+f.name+': '+err.message);log('Import failed: '+err.message)}
+  $('file').value=''});
+const allMsgs=()=>ALL_KEYS.flatMap(msgsFor);
+let dl=null;$('getHtml').hidden=true;$('saveSyx').textContent='Save .syx';$('hexWrap').hidden=true;$('log').textContent='';
+try{window.claude&&window.claude.use&&window.claude.use('downloads').then(d=>{dl=d;if(d){$('saveSyx').textContent='Save hex .txt';$('getHtml').hidden=false}}).catch(()=>{})}catch(e){}
+async function offer(filename,data){try{await dl.save({filename,data});toast('Saved '+filename)}catch(e){if(e&&e.code!=='declined')toast('Could not save: '+(e.message||e.code))}}
+$('getHtml').addEventListener('click',()=>offer('a80-editor.html','<!doctype html>\n'+document.documentElement.outerHTML));
+$('saveSyx').addEventListener('click',()=>{if(dl)return offer('a80-library.txt',allMsgs().map(hex).join('\n')+'\n');const bytes=new Uint8Array(allMsgs().flat());const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download='a80-library.syx';document.body.append(a);a.click();a.remove();
+  toast('Saving a80-library.syx. If nothing downloads, use Copy hex.')});
+$('copyHex').addEventListener('click',async()=>{const t=allMsgs().map(hex).join('\n');$('hexOut').value=t;$('hexWrap').hidden=false;$('logD').open=true;
+  try{await navigator.clipboard.writeText(t);toast('Hex for the whole library copied')}catch(e){$('hexOut').select();toast('Hex is in the MIDI log panel, selected for copying')}});
+
+restore();renderAll();
+</script>
